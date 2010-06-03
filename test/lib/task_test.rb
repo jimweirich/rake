@@ -436,4 +436,24 @@ class TestTaskWithArguments < Test::Unit::TestCase
     t = task(:t, :needs => [:pre])
     t.invoke("bill", "1.2")
   end
+  
+  def test_with
+    eval <<-I
+class WidgetTask < Rake::Task
+  attr_accessor :widget
+end        
+I
+    extended = WidgetTask.define_task
+    assert_equal(extended.with(:widget => "something"), extended)
+    extended.with(:widget => "other thing")
+    assert_equal(extended.widget, "other thing")
+    thrown_error = false
+    begin
+      extended.with(:stuff => "something")
+    rescue ArgumentError => e
+      thrown_error = true
+      assert_match /WidgetTask does not support the option stuff/, e.message
+    end
+    assert_equal(true, thrown_error)
+  end
 end

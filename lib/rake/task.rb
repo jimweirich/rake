@@ -273,6 +273,25 @@ module Rake
       result << "................................\n\n"
       return result
     end
+    
+    # :call-seq:
+    #   with(options) => self
+    #
+    # Passes options to the task and returns self. Some tasks support additional options, for example,
+    # the WarTask supports options like :manifest, :libs and :classes.
+    #
+    # For example:
+    #   package(:jar).with(:manifest=>'MANIFEST_MF')
+    def with(options)
+      options.each do |key, value|
+        begin
+          send "#{key}=", value
+        rescue NoMethodError
+          raise ArgumentError, "#{self.class.name} does not support the option #{key}"
+        end
+      end
+      self
+    end
 
     # ----------------------------------------------------------------
     # Rake Module Methods
