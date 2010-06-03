@@ -83,8 +83,8 @@ module Rake
     end
 
     # Enhance a task with prerequisites or actions.  Returns self.
-    def enhance(deps=nil, &block)
-      @prerequisites |= deps if deps
+    def enhance(*args, &block)
+      @prerequisites |= [args].flatten
       @actions << block if block_given?
       self
     end

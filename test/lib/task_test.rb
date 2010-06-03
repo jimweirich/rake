@@ -366,6 +366,20 @@ class TestTaskWithArguments < Test::Unit::TestCase
     assert_nothing_raised do t.invoke(1) end
     assert_equal [:a, :b, :c, :d], notes
   end
+  
+  def test_prerequisites_of_various_arity_are_ok
+    t = task(:x) do
+      puts "nothing"
+    end
+    t.enhance [:a]
+    assert_equal [:a], t.prerequisites
+    t.enhance :b
+    assert_equal [:a, :b], t.prerequisites
+    t.enhance :c, :d
+    assert_equal [:a, :b, :c, :d], t.prerequisites
+    t.enhance :e, [:f, [:g]]
+    assert_equal [:a, :b, :c, :d, :e, :f, :g], t.prerequisites
+  end
 
   def test_arguments_are_passed_to_block
     t = task(:t, :a, :b) { |tt, args|
@@ -452,7 +466,7 @@ I
       extended.with(:stuff => "something")
     rescue ArgumentError => e
       thrown_error = true
-      assert_match /WidgetTask does not support the option stuff/, e.message
+      assert_match(/WidgetTask does not support the option stuff/, e.message)
     end
     assert_equal(true, thrown_error)
   end
