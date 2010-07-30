@@ -82,6 +82,7 @@ module Rake::AltSystem
     end
 
     def system(cmd, *args)
+      args.compact!
       repaired = (
         if args.empty?
           [repair_command(cmd)]
