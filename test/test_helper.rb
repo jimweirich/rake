@@ -1,6 +1,6 @@
 begin
   require 'rubygems'
-rescue LoadError => ex
+rescue LoadError
   # No rubygems available
 end
 require 'test/unit'

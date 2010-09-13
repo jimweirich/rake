@@ -25,7 +25,7 @@ module Rake # :nodoc:
 
     def initialize(path, entry)
       @path = path
-      @mode, line, @owner, @group, size, d1, d2, d3, @name = entry.split(' ')
+      @mode, _, @owner, @group, size, d1, d2, d3, @name = entry.split(' ') # _ = line
       @size = size.to_i
       @time = determine_time(d1, d2, d3)
     end
@@ -59,7 +59,7 @@ module Rake # :nodoc:
     def determine_time(d1, d2, d3)
       now = self.class.time.now
       if /:/ =~ d3
-        h, m = d3.split(':')
+        #h, m = d3.split(':')
         result = Time.parse("#{d1} #{d2} #{now.year} #{d3}")
         if result > now
           result = Time.parse("#{d1} #{d2} #{now.year-1} #{d3}")
@@ -134,7 +134,7 @@ module Rake # :nodoc:
         upload(fn)
       end
     end
-    
+
     # Close the uploader.
     def close
       @ftp.close

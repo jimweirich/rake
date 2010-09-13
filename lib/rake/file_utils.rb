@@ -7,9 +7,10 @@ require 'fileutils'
 #
 module FileUtils
   # Path to the currently running Ruby program
+  config = Kernel.const_defined?(:RbConfig) ? RbConfig : Config
   RUBY = File.join(
-    Config::CONFIG['bindir'],
-    Config::CONFIG['ruby_install_name'] + Config::CONFIG['EXEEXT']).
+    config::CONFIG['bindir'],
+    config::CONFIG['ruby_install_name'] + config::CONFIG['EXEEXT']).
     sub(/.*\s.*/m, '"\&"')
 
   OPT_TABLE['sh']  = %w(noop verbose)
@@ -49,7 +50,7 @@ module FileUtils
   def create_shell_runner(cmd)
     show_command = cmd.join(" ")
     show_command = show_command[0,42] + "..." unless $trace
-    block = lambda { |ok, status|
+    lambda { |ok, status|
       ok or fail "Command failed with status (#{status.exitstatus}): [#{show_command}]"
     }
   end
@@ -91,7 +92,7 @@ module FileUtils
     else
       begin
         ln(*args)
-      rescue StandardError, NotImplementedError => ex
+      rescue StandardError, NotImplementedError
         LN_SUPPORTED[0] = false
         cp(*args)
       end
