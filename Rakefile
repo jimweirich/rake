@@ -8,7 +8,7 @@
 
 begin
   require 'rubygems'
-  require 'rake/gempackagetask'
+  require 'rubygems/package_task'
 rescue Exception
   nil
 end
@@ -174,7 +174,7 @@ PKG_FILES.exclude('TAGS')
 PKG_FILES.exclude(%r{doc/example/main$})
 
 if ! defined?(Gem)
-  puts "Package Target requires RubyGEMs"
+  puts "Package Target requires RubyGems"
 else
   SPEC = Gem::Specification.new do |s|
     
@@ -230,7 +230,7 @@ else
 #     end
   end
 
-  package_task = Rake::GemPackageTask.new(SPEC) do |pkg|
+  package_task = Gem::PackageTask.new(SPEC) do |pkg|
     pkg.need_zip = true
     pkg.need_tar = true
   end
