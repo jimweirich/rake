@@ -14,7 +14,6 @@ rescue Exception
 end
 require 'rake/clean'
 require 'rake/testtask'
-require 'rake/rdoctask'
 
 CLEAN.include('**/*.o', '*.dot', '**/*.rbc')
 CLOBBER.include('doc/example/main', 'testdata')
@@ -134,28 +133,24 @@ end
 # Create a task to build the RDOC documentation tree.
 
 begin
-  require 'darkfish-rdoc'
-  DARKFISH_ENABLED = true
-rescue LoadError => ex
-  DARKFISH_ENABLED = false
-end
+  begin
+    gem 'rdoc'
+  rescue Gem::LoadError
+  end
 
-BASE_RDOC_OPTIONS = [
-  '--line-numbers', '--inline-source',
-  '--main' , 'README.rdoc',
-  '--title', 'Rake -- Ruby Make'
-]
+  require 'rdoc/task'
 
-rd = Rake::RDocTask.new("rdoc") do |rdoc|
-  rdoc.rdoc_dir = 'html'
-  rdoc.template = 'doc/jamis.rb'
-  rdoc.title    = "Rake -- Ruby Make"
-  rdoc.options = BASE_RDOC_OPTIONS.dup
-  rdoc.options << '-SHN' << '-f' << 'darkfish' if DARKFISH_ENABLED
-    
-  rdoc.rdoc_files.include('README.rdoc', 'MIT-LICENSE', 'TODO', 'CHANGES')
-  rdoc.rdoc_files.include('lib/**/*.rb', 'doc/**/*.rdoc')
-  rdoc.rdoc_files.exclude(/\bcontrib\b/)
+  rd = RDoc::Task.new do |rdoc|
+    rdoc.rdoc_dir = 'html'
+    rdoc.main  = 'README.rdoc'
+    rdoc.title = 'Rake -- Ruby Make'
+    rdoc.options << '-HN'
+
+    rdoc.rdoc_files.include('README.rdoc', 'MIT-LICENSE', 'TODO', 'CHANGES')
+    rdoc.rdoc_files.include('lib/**/*.rb', 'doc/**/*.rdoc')
+    rdoc.rdoc_files.exclude(/\bcontrib\b/)
+  end
+rescue LoadError
 end
 
 # ====================================================================
@@ -218,7 +213,10 @@ else
 
     s.has_rdoc = true
     s.extra_rdoc_files = rd.rdoc_files.reject { |fn| fn =~ /\.rb$/ }.to_a
-    s.rdoc_options = BASE_RDOC_OPTIONS
+    s.rdoc_options = [
+      '-HN',
+      '--main', 'README.rdoc',
+      '--title', 'Rake -- Ruby Make']
 
     #### Author and project details.
 
