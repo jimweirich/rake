@@ -658,6 +658,16 @@ class TestApplicationOptions < Test::Unit::TestCase
     assert_equal ["a", "b"], @tasks.sort
   end
 
+  def test_task_collection_of_arg_syntax
+    command_line("a", "--", "b", "c", "d", "--", "x", "y", "z")
+    assert_equal ["a", "b[c,d]", "x[y,z]"], @tasks.sort
+  end
+
+  def test_task_collection_ignores_empty_arg_syntax
+    command_line("a", "--", "--")
+    assert_equal ["a"], @tasks.sort
+  end
+
   def test_default_task_collection
     command_line()
     assert_equal ["default"], @tasks

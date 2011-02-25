@@ -122,6 +122,10 @@ module Rake
       end
       [name, args]
     end
+    
+    def format_task_string(args)
+      "#{args.shift}[#{args.join(',')}]"
+    end
 
     # Provide standard exception handling for the given block.
     def standard_exception_handling
@@ -421,6 +425,12 @@ module Rake
         end
 
         standard_rake_options.each { |args| opts.on(*args) }
+
+        opts.on_tail("--", "Turn on arg syntax ('-- a b c' => 'a[b,c]')") do
+          # restores option break to ARGV if found, allowing arg syntax
+          throw :terminate, "--"
+        end
+        
         opts.environment('RAKEOPT')
       end.parse!
 
@@ -532,13 +542,32 @@ module Rake
     # Environmental assignments are processed at this time as well.
     def collect_tasks
       @top_level_tasks = []
+
+      current = nil
       ARGV.each do |arg|
-        if arg =~ /^(\w+)=(.*)$/
+        case arg
+        when '--'
+          if current && !current.empty?
+            @top_level_tasks << format_task_string(current)
+          end
+          current = []
+        when /^(\w+)=(.*)$/
           ENV[$1] = $2
+        when /^-/
+          next
         else
-          @top_level_tasks << arg unless arg =~ /^-/
+          if current
+            current << arg
+          else
+            @top_level_tasks << arg
+          end
         end
       end
+
+      if current && !current.empty?
+        @top_level_tasks << format_task_string(current)
+      end
+
       @top_level_tasks.push("default") if @top_level_tasks.size == 0
     end
 
