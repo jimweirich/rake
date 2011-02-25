@@ -3,12 +3,123 @@ require 'optparse'
 
 module Rake
   # #########################################################################
-  # A ConfigTask is a task that allows simple command line configurations to
-  # be passed to it.  Configurations are parsed as options from the task args.
-  #
+  # = ConfigTask
+  # 
+  # Config tasks allow the creation of tasks that can recieve simple
+  # configurations using command line options. The intention is to allow
+  # command-like tasks to be defined and used in a natural way (ie using a 'name
+  # --flag arg' syntax). For clarity ConfigTasks are declared using 'tasc' and
+  # referred to as 'tascs'.
+  # 
+  # Tasc configs are declared using an options string and accessed on the tasc
+  # itself. Numeric types are cast to appropriate values.
+  # 
+  #   require 'rake'
+  # 
+  #   desc "welcome a thing"
+  #   tasc :welcome, :thing, %{
+  #     -m,--message [hello]  : A welcome message
+  #     -n [1]                : Number of times to repeat
+  #   } do |config, args|
+  #     config.n.times do 
+  #       puts "#{config.message} #{args.thing}"
+  #     end
+  #   end
+  # 
+  # Then from the command line, invoke after '--':
+  # 
+  #   % rake -- welcome world
+  #   hello world
+  #   % rake -- welcome --message goodnight -n 3 moon
+  #   goodnight moon
+  #   goodnight moon
+  #   goodnight moon
+  #   % rake -- welcome --help
+  #   Usage: rake -- welcome [options] object
+  #       -m, --message [hello]            A welcome message
+  #       -n [1]                           Number of times to repeat
+  #       -h, --help                       Display this help message.
+  # 
+  # Unlike typical tasks which only run once, tascs are reset after each run, so
+  # that they can be invoked multiple times:
+  # 
+  #   % rake -- welcome world -- welcome moon -m goodnight
+  #   hello world
+  #   goodnight moon
+  # 
+  # Tascs may participate in dependency workflows, although it gets a little
+  # peculiar when other tasks depend upon the tasc. Below is an explanation.
+  # TL;DR; -- tascs may have dependencies, but other tasks/tascs should not depend
+  # upon a tasc.
+  # 
+  # == Dependency Discussion
+  # 
+  # Normally tasks are designed to be unaware of context (for lack of a better
+  # word). Once you introduce arguments/configs, then suddenly it matters when the
+  # arguments/configs 'get to' a task. For example:
+  # 
+  #   require 'rake'
+  # 
+  #   task(:a) { puts 'a' }
+  #   task(:b => :a) { puts 'b' }
+  # 
+  #   tasc(:x, [:letter, 'x']) {|t| puts t.letter }
+  #   tasc(:y, [:letter, 'y'], :needs => :x) {|t| puts t.letter }
+  # 
+  # There is no order issue for the tasks, for which there is no context and
+  # therefore they can align into a one-true execution order regardless of
+  # declaration order.
+  # 
+  #   % rake a b
+  #   a
+  #   b
+  #   % rake b a
+  #   a
+  #   b
+  # 
+  # A problem arises, however with tascs that do have a context. Now it matters
+  # what order things get declared in. For example:
+  # 
+  #   % rake -- x --letter a -- y --letter b
+  #   a
+  #   a
+  #   b
+  #   % rake -- y --letter b -- x --letter a
+  #   x
+  #   b
+  #   a
+  # 
+  # You can see that declaration order matters for tascs in a way it does not for
+  # tasks. The problem is not caused directly by the decision to make tascs run
+  # multiple times; it's caused by the context which gets interwoven to all
+  # tasks/tascs via dependencies. For example, pretend tascs only executed once...
+  # which arguments/configurations should win in this case?
+  # 
+  #   % rake -- welcome world -- welcome -m goodnight
+  #   # hello world ?
+  #   # goodnight ?
+  #   # goodnight world ?
+  # 
+  # All of this can be avoided by only using tascs as end-points for dependency
+  # workflows and never as prerequisites. This is fine:
+  # 
+  #   require 'rake'
+  # 
+  #   task(:a) { print 'a' }
+  #   task(:b => :a) { print 'b' }
+  #   tasc(:x, [:letter, 'x'], :needs => [:b, :a]) {|t| puts t.letter }
+  # 
+  # Now:
+  # 
+  #   % rake -- x --letter c
+  #   abc
+  #   % rake a b -- x --letter c
+  #   abc
+  #   % rake b a -- x --letter c
+  #   abc
+  # 
   class ConfigTask < Task
 
-    # An OptionParser containing the configs for self.
     def parser
       @parser ||= OptionParser.new do |opts|
         opts.on_tail("-h", "--help", "Display this help message.") do
@@ -21,6 +132,10 @@ module Rake
     def invoke(*args)
       parser.parse!(args)
       super(*args)
+    end
+
+    def invoke_with_call_chain(*args)
+      super
       reenable
     end
 
@@ -115,14 +230,6 @@ module Rake
       end
     end
 
-    # Guess the option declaration for a config given a key and default
-    # value, according to the following logic:
-    #
-    #   default     opt
-    #   false       ['--key']
-    #   true        ['--[no-]key']
-    #   (obj)       ['--key KEY']
-    #
     def guess_option(key, default)
       n = key.to_s.length
       

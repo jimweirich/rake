@@ -29,7 +29,7 @@ module Rake
     #
     # Example:
     #
-    #   tasc :say, :object, [:msg, 'hello'], [:n, 1] do |config, args|
+    #   tasc :welcome, :object, [:msg, 'hello'], [:n, 1] do |config, args|
     #     config.n.times do 
     #       puts "#{config.msg} #{args.object}"
     #     end
@@ -39,8 +39,8 @@ module Rake
     #
     # Example:
     #
-    #   tasc(:say, :object, 
-    #     [:msg, 'hello', '-m', '--message', 'A message string']
+    #   tasc(:welcome, :object, 
+    #     [:msg, 'hello', '-m', '--message', 'A welcome message']
     #     [:n, 1, '-n', 'Number of times to repeat'] 
     #   ) do |config, args|
     #     config.n.times do 
@@ -55,9 +55,9 @@ module Rake
     #
     # Example:
     #
-    #   tasc :say, :object, %{
-    #     -m,--message [MSG]  : A message string
-    #     -n [1]              : Number of times to repeat
+    #   tasc :welcome, :object, %{
+    #     -m,--message [hello]  : A welcome message
+    #     -n [1]                : Number of times to repeat
     #   } do |config, args|
     #     config.n.times do 
     #       puts "#{config.message} #{args.object}"
