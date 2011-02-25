@@ -553,13 +553,11 @@ module Rake
           current = []
         when /^(\w+)=(.*)$/
           ENV[$1] = $2
-        when /^-/
-          next
         else
           if current
             current << arg
           else
-            @top_level_tasks << arg
+            @top_level_tasks << arg unless arg =~ /^-/
           end
         end
       end

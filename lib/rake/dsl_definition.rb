@@ -23,6 +23,31 @@ module Rake
       Rake::Task.define_task(*args, &block)
     end
 
+    # Declare a config task.  Configs are defined as arrays of [key, default,
+    # *optargs] that follow the argument list. 
+    #
+    # Example:
+    #
+    #   tasc :say, :object, [:msg, 'hello'] do |config, args|
+    #     puts "#{config.msg} #{args.object}"
+    #   end
+    #
+    # Prerequisites may still be declared using a trailing hash in the form
+    # {:needs => [prequisites]}.
+    #
+    def tasc(*args, &block)
+      # adding an explicit needs hash ensures args will be equivalent to one
+      # of these patterns (thereby making argument resolution predictable)
+      #
+      #   tasc :name => :need
+      #   tasc :name => [:needs]
+      #   tasc :name, args_or_configs..., {:needs => [:needs]}
+      #
+      unless args.last.kind_of?(Hash)
+        args << {:needs => []}
+      end
+      Rake::ConfigTask.define_task(*args, &block)
+    end
 
     # Declare a file task.
     #
