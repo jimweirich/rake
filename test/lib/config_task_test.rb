@@ -45,6 +45,28 @@ class ZConfigFileTask < Test::Unit::TestCase
     assert_equal({:one => 'one', :two => 'two'}, t.config)
   end
 
+  def test_configs_are_parsed_from_a_string
+    t = tasc :t, %{
+      -o,--one [ONE]  : One doc
+      --two [TWO]     : Two doc
+      -t [THREE]      : Three doc
+    }
+    assert_equal [], t.arg_names
+    assert_equal({
+      :one => 'ONE', 
+      :two => 'TWO',
+      :t => 'THREE'
+    }, t.config)
+    
+    assert_equal %q{
+Usage: rake -- t [options] 
+    -o, --one [ONE]                  One doc
+        --two [TWO]                  Two doc
+    -t [THREE]                       Three doc
+    -h, --help                       Display this help message.
+}, "\n" + t.parser.to_s
+  end
+
   def test_args_and_configs_given
     t = tasc :t, :a, :b, [:one, 'one'], [:two, 'two']
     assert_equal [:a, :b], t.arg_names
@@ -111,6 +133,12 @@ class ZConfigFileTask < Test::Unit::TestCase
     t.invoke(1, '--one', 'ONE', 2)
   end
 
+  def test_tasc_treads_single_letter_keys_as_shorts
+    t = tasc :t, [:k, 'value']
+    t.invoke('-k', 'VALUE')
+    assert_equal 'VALUE', t.k
+  end
+
   def test_tasc_handles_integers
     t = tasc :t, [:key, 1]
     t.invoke('--key', '8')
@@ -143,5 +171,45 @@ class ZConfigFileTask < Test::Unit::TestCase
     t = tasc :t, [:key, [], "--key x,y,z", Array]
     t.invoke('--key', 'a,b')
     assert_equal ['a', 'b'], t.key
+  end
+
+  def test_tasc_gueses_string_configs
+    t = tasc :t, '--key [vaLue]'
+    assert_equal 'vaLue', t.key
+    t.invoke('--key', '8')
+    assert_equal '8', t.key
+  end
+
+  def test_tasc_allows_empty_string_defaults
+    t = tasc :t, '--key []'
+    assert_equal '', t.key
+  end
+
+  def test_tasc_gueses_integer_configs
+    t = tasc :t, '--key [1]'
+    assert_equal 1, t.key
+    t.invoke('--key', '8')
+    assert_equal 8, t.key
+  end
+
+  def test_tasc_gueses_float_configs
+    t = tasc :t, '--key [1.1]'
+    assert_equal 1.1, t.key
+    t.invoke('--key', '8.8')
+    assert_equal 8.8, t.key
+  end
+
+  def test_tasc_gueses_flags
+    t = tasc :t, '--key'
+    assert_equal false, t.key
+    t.invoke('--key')
+    assert_equal true, t.key
+  end
+
+  def test_tasc_gueses_switches
+    t = tasc :t, '--[no-]key'
+    assert_equal true, t.key
+    t.invoke('--no-key')
+    assert_equal false, t.key
   end
 end

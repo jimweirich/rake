@@ -23,18 +23,49 @@ module Rake
       Rake::Task.define_task(*args, &block)
     end
 
-    # Declare a config task.  Configs are defined as arrays of [key, default,
-    # *optargs] that follow the argument list. 
+    # Declare a config task.  Configs are defined as arrays of [key, default]
+    # pairs that follow the argument list. The default value may be a String,
+    # Integer, Float, true, or false; these values will be cast appropriately.
     #
     # Example:
     #
-    #   tasc :say, :object, [:msg, 'hello'] do |config, args|
-    #     puts "#{config.msg} #{args.object}"
+    #   tasc :say, :object, [:msg, 'hello'], [:n, 1] do |config, args|
+    #     config.n.times do 
+    #       puts "#{config.msg} #{args.object}"
+    #     end
+    #   end
+    #
+    # OptionParser arguments may be specified after the default, if desired:
+    #
+    # Example:
+    #
+    #   tasc(:say, :object, 
+    #     [:msg, 'hello', '-m', '--message', 'A message string']
+    #     [:n, 1, '-n', 'Number of times to repeat'] 
+    #   ) do |config, args|
+    #     config.n.times do 
+    #       puts "#{config.msg} #{args.object}"
+    #     end
+    #   end
+    #
+    # Configs may also be declared as a string, which allows documentation and
+    # compact specification of shorts.  In this syntax the config key will be
+    # equal to the long, if available, or the short if not.  The config type
+    # will be guessed from the default string.
+    #
+    # Example:
+    #
+    #   tasc :say, :object, %{
+    #     -m,--message [MSG]  : A message string
+    #     -n [1]              : Number of times to repeat
+    #   } do |config, args|
+    #     config.n.times do 
+    #       puts "#{config.message} #{args.object}"
+    #     end
     #   end
     #
     # Prerequisites may still be declared using a trailing hash in the form
     # {:needs => [prequisites]}.
-    #
     def tasc(*args, &block)
       # adding an explicit needs hash ensures args will be equivalent to one
       # of these patterns (thereby making argument resolution predictable)

@@ -48,8 +48,48 @@ module Rake
     def parse_options(obj)
       case obj
       when Array  then [obj]
+      when String then parse_options_string(obj)
       else nil
       end
+    end
+
+    def parse_options_string(string)
+      string = string.strip
+      return nil unless string[0] == ?-
+      
+      string.split(/\s*\n\s*/).collect do |str|
+        flags, desc = str.split(':', 2)
+        flags = flags.split(',').collect! {|arg| arg.strip }
+        
+        key = guess_key(flags) 
+        default = flags.last =~ /\s+\[(.*)\]/ ? guess_default($1) : guess_bool_default(flags)
+        
+        [key, default] + flags + [desc.to_s.strip]
+      end
+    end
+
+    def guess_key(flags)
+      keys = flags.collect do |flag|
+        case flag.split(' ').first
+        when /\A-([^-])\z/       then $1
+        when /\A--\[no-\](.*)\z/ then $1
+        when /\A--(.*)\z/        then $1
+        else nil
+        end
+      end
+      keys.compact.sort_by {|key| key.length }.last
+    end
+
+    def guess_default(str)
+      case str
+      when /\A(\d+)\z/ then str.to_i
+      when /\A(\d+\.\d+)\z/ then str.to_f
+      else str
+      end
+    end
+
+    def guess_bool_default(flags)
+      flags.any? {|flag| flag =~ /\A--\[no-\]/ ? true : false }
     end
 
     def set_options(options)
@@ -73,13 +113,15 @@ module Rake
     #   (obj)       ['--key KEY']
     #
     def guess_option(key, default)
+      n = key.to_s.length
+      
       case default
       when false
-        ["--#{key}"]
+        n == 1 ? ["-#{key}"] : ["--#{key}"]
       when true
         ["--[no-]#{key}"]
       else
-        ["--#{key} [#{key.to_s.upcase}]"]
+        n == 1 ? ["-#{key} [#{key.to_s.upcase}]"] : ["--#{key} [#{key.to_s.upcase}]"]
       end
     end
 
