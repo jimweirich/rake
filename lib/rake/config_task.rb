@@ -11,7 +11,6 @@ module Rake
     # An OptionParser containing the configs for self.
     def parser
       @parser ||= OptionParser.new do |opts|
-        opts.banner = "Usage: rake -- #{name} [options] #{arg_names.join(' ')}"
         opts.on_tail("-h", "--help", "Display this help message.") do
           puts opts
           exit
@@ -22,10 +21,20 @@ module Rake
     def invoke(*args)
       parser.parse!(args)
       super(*args)
+      reenable
+    end
+
+    def reenable
+      @config = nil
+      super
     end
 
     def config
-      @config ||= {}
+      @configs ||= default_config.dup
+    end
+
+    def default_config
+      @default_config ||= {}
     end
 
     def [](key)
@@ -43,6 +52,8 @@ module Rake
         args.pop
       end
       @arg_names = args.map { |a| a.to_sym }
+      parser.banner = "Usage: rake -- #{name} [options] #{@arg_names.join(' ')}"
+      @arg_names
     end
 
     def parse_options(obj)
@@ -97,7 +108,7 @@ module Rake
         default = false if default.nil?
         option = guess_option(key, default) if option.empty?
 
-        config[key.to_sym] = default
+        default_config[key.to_sym] = default
         parser.on(*option) do |value|
           config[key.to_sym] = parse_config_value(default, value)
         end

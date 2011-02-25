@@ -113,6 +113,19 @@ Usage: rake -- t [options]
     assert_equal ["pre"], t.prerequisites
   end
 
+  def test_tascs_reenable_after_each_invoke
+    runlist = []
+    t = tasc :t, [:key, 'a'] do |t|
+      runlist << t.key
+    end
+    assert_equal 'a', t.key
+    t.invoke('--key', 'b')
+    assert_equal 'b', t.key
+    t.invoke('--key', 'c')
+    assert_equal 'c', t.key
+    assert_equal ['b', 'c'], runlist
+  end
+
   def test_tasc_can_access_arguments_and_configs
     t = tasc(:t, :a, :b,
       [:one, 'one'], 
@@ -161,8 +174,6 @@ Usage: rake -- t [options]
     t = tasc :t, [:key, true]
     t.invoke('--key')
     assert_equal true, t.key
-
-    t = tasc :t, [:key, true]
     t.invoke('--no-key')
     assert_equal false, t.key
   end
