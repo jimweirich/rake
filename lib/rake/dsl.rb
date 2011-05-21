@@ -1,2 +1,2 @@
 require 'rake'
-include Rake::DSL
+extend Rake::DSL
