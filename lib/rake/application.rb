@@ -430,6 +430,8 @@ module Rake
         opts.environment('RAKEOPT')
       end.parse!
 
+      Object.send(:include, Rake::DSL::DeprecatedVersion)
+
       # If class namespaces are requested, set the global options
       # according to the values in the options structure.
       if options.classic_namespace

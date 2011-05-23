@@ -28,9 +28,15 @@ class TestRakeDsl < Rake::TestCase
     refute_nil Rake::Task["bob:t"]
   end
 
-  def test_dsl_not_toplevel_by_default
-    actual = TOPLEVEL_BINDING.instance_eval { defined?(task) }
-    assert_nil actual
+  def test_toplevel_dsl_deprecated
+    _, stderr = capture_io do
+      TOPLEVEL_BINDING.instance_eval do
+        task :something do
+        end
+      end
+    end
+
+    assert_match /Rake::DSL/, stderr, "Top Level DSL should be deprecated"
   end
 
   def test_dsl_toplevel_when_require_rake_dsl

@@ -16,10 +16,13 @@ end
 
 task :obj do
   begin
-    Object.new.instance_eval { task :xyzzy }
-    puts "BAD:D  Rake DSL are polluting objects"
-  rescue StandardError => ex
+    _, stderr = capture_io do
+      Object.new.instance_eval { task :xyzzy }
+    end
+  if stderr[/deprecated/]
     puts "GOOD:D Rake DSL are not polluting objects"
+  else
+    puts "BAD:D  Rake DSL are polluting objects"
   end
 end
 

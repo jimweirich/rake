@@ -135,6 +135,30 @@ module Rake
         Rake.application.add_import(fn)
       end
     end
+
+    module DeprecatedVersion
+      def self.append_features(base)
+        base.send(:include, Rake::DSL)
+        super
+      end
+
+      def _warn_once(method_name)
+        @toplevel_method_warning ||= false
+        if !@toplevel_method_warning
+          $stderr.write "Rake::DSL is no longer included in Object.  Be sure you require 'rake/dsl' or include Rake::DSL before trying to use #{method_name.inspect} as this functionality will be removed in rake 1.0.\n"
+          @toplevel_method_warning = true
+        end
+      end
+
+      [:task, :desc, :import, :rule, :namespace, :multitask, :directory, :file, :file_create].each do |deprecated_method|
+        class_eval <<-EOT
+        def #{deprecated_method}(*args)
+          _warn_once("#{deprecated_method}")
+          super
+        end
+        EOT
+      end
+    end
   end
 
   extend FileUtilsExt
