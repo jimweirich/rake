@@ -140,17 +140,19 @@ module Rake
   end
 
   module DeprecatedObjectDSL
-    dsl = Object.new.extend DSL
+    Wrapper = Object.new.extend DSL
     DSL.private_instance_methods(false).each do |name|
-      define_method name do |*args, &block|
+      class_eval <<-CODE
+      def #{name}(*args, &block)
         unless @rake_dsl_warning
           $stderr.puts "WARNING: Global access to Rake DSL methods is deprecated.  Please Include"
           $stderr.puts "    ...  Rake::DSL into classes and modules which use the Rake DSL methods."
           @rake_dsl_warning = true
         end
-        $stderr.puts "WARNING: DSL method #{self.class}##{name} called at #{caller.first}"
-        dsl.send(name, *args, &block)
+        $stderr.puts "WARNING: DSL method \#{self.class}##{name} called at \#{caller.first}"
+        Wrapper.send(:#{name}, *args, &block)
       end
+      CODE
       private name
     end
   end
