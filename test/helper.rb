@@ -35,7 +35,7 @@ class Rake::TestCase < MiniTest::Unit::TestCase
   ensure
     Rake.application.options.ignore_deprecate = false
   end
-
+  
 end
 
 # workarounds for 1.8

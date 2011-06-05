@@ -319,10 +319,10 @@ class TestRakeApplication < Rake::TestCase
     @app.intern(Rake::Task, "default").enhance { fail }
     ARGV.clear
     ARGV << '-f' << '-s' <<  '--rakelib=""'
-    assert_raises(SystemExit) {
-      _, err = capture_io { @app.run }
-      assert_match(/see full trace/, err)
+    _, err = capture_io { 
+      assert_raises(SystemExit) { @app.run }
     }
+    assert_match(/See full trace/, err)
   ensure
     ARGV.clear
   end
@@ -331,10 +331,24 @@ class TestRakeApplication < Rake::TestCase
     @app.intern(Rake::Task, "default").enhance { fail }
     ARGV.clear
     ARGV << '-f' << '-s' << '-t'
-    assert_raises(SystemExit) {
-      _, err = capture_io { @app.run }
-      refute_match(/see full trace/, err)
+    _, err = capture_io { 
+      assert_raises(SystemExit) { @app.run }
     }
+    refute_match(/See full trace/, err)
+    assert_match(/application.rb/, err)
+  ensure
+    ARGV.clear
+  end
+
+  def test_bad_run_with_cron
+    @app.intern(Rake::Task, "default").enhance { fail }
+    ARGV.clear
+    ARGV << '-f' << '-s' << '-c'
+    _, err = capture_io { 
+      assert_raises(SystemExit) { @app.run }
+    }
+    refute_match(/See full trace/, err)
+    assert_match(/application.rb/, err)
   ensure
     ARGV.clear
   end

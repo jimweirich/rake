@@ -234,6 +234,16 @@ class TestRakeApplicationOptions < Rake::TestCase
     end
   end
 
+  def test_cron
+    in_environment do
+      flags('--cron', '-c') do |opts|
+        assert opts.cron
+        assert opts.silent
+        assert opts.ignore_deprecate
+      end
+    end
+  end
+
   def test_trace_rules
     in_environment do
       flags('--rules') do |opts|

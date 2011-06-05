@@ -144,13 +144,13 @@ module Rake
     def display_error_message(ex)
       $stderr.puts "#{name} aborted!"
       $stderr.puts ex.message
-      if options.trace
+      if options.trace or options.cron
         $stderr.puts ex.backtrace.join("\n")
       else
         $stderr.puts rakefile_location(ex.backtrace)
       end
       $stderr.puts "Tasks: #{ex.chain}" if has_chain?(ex)
-      $stderr.puts "(See full trace by running task with --trace)" unless options.trace
+      $stderr.puts "(See full trace by running task with --trace)" unless options.trace or options.cron
     end
 
     # Warn about deprecated usage.
@@ -386,6 +386,13 @@ module Rake
           lambda { |value|
             options.trace = true
             Rake.verbose(true)
+          }
+        ],
+        ['--cron', '-c', "Like -s and -X, but full backtraces are printed on errors (useful for cronjobs)",
+          lambda { |value|
+            options.cron   = true
+            options.silent = true
+            options.ignore_deprecate = true
           }
         ],
         ['--verbose', '-v', "Log message to standard output.",
