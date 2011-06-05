@@ -499,6 +499,26 @@ module Rake
           end
         end
       end
+      
+      # load gem rake files if Bundler is defined
+      if defined?(Bundler)
+        Bundler.load.specs.each do |spec|
+          #look for tasks in the gem's load paths
+          spec.load_paths.each do  |load_path|
+            if File.directory?(load_path)
+              Dir.foreach(load_path) do |path|
+                check_dir = File.join(load_path, path)
+                if File.directory?(check_dir)
+                  glob("#{check_dir}/**/*.rake") do |name|
+                    add_import name
+                  end
+                end
+              end
+            end
+          end
+        end
+      end
+      
       load_imports
     end
 
