@@ -52,6 +52,11 @@ class TestRakeTaskWithArguments < Rake::TestCase
 
   def test_arg_list_is_empty_if_no_args_given
     t = task(:t) { |tt, args| assert_equal({}, args.to_hash) }
+    t.invoke()
+  end
+
+  def test_arg_list_contains_extra_args
+    t = task(:t) { |tt, args| assert_equal({:_arg_000_ => 1, :_arg_001_ => 2, :_arg_002_ => 3}, args.to_hash) }
     t.invoke(1, 2, 3)
   end
 

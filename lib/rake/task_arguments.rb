@@ -15,8 +15,9 @@ module Rake
       @names = names
       @parent = parent
       @hash = {}
-      names.each_with_index { |name, i|
-        @hash[name.to_sym] = values[i] unless values[i].nil?
+      values.each_with_index { |val, i|
+        name = (names[i] || "_arg_%03d_" % i).to_sym
+        @hash[name] = val unless val.nil?
       }
     end
 
