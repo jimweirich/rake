@@ -81,6 +81,10 @@ class Rake::TestCase < MiniTest::Unit::TestCase
     Rake.application.options.ignore_deprecate = false
   end
 
+  def new_line
+    Rake.application.windows? ? "\r\n" : "\n"
+  end
+
   def rake_system_dir
     @system_dir = 'system'
 
