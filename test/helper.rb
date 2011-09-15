@@ -6,6 +6,7 @@ rescue Gem::LoadError
 end
 
 require 'minitest/autorun'
+require 'pathname'
 require 'rake'
 require 'tmpdir'
 require File.expand_path('../file_creation', __FILE__)
