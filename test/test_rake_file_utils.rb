@@ -141,6 +141,12 @@ class TestRakeFileUtils < Rake::TestCase
     }
   end
 
+  def test_sh_with_nil_arguments
+    verbose(false) {
+      Sh.run RUBY, nil, nil, nil, '-e', nil, 'true', nil, nil, nil, nil, nil
+    }
+  end
+
   def test_sh_failure
     shellcommand
 
@@ -238,6 +244,12 @@ class TestRakeFileUtils < Rake::TestCase
       replace_ruby {
         ruby 'check_no_expansion.rb', env_var, 'someval'
       }
+    }
+  end
+
+  def test_ruby_with_nil_arguments
+    verbose(false) {
+      ruby nil, nil, nil, '-e', nil, 'true', nil, nil, nil, nil, nil
     }
   end
 
