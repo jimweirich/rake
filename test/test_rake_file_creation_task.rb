@@ -25,13 +25,6 @@ class TestRakeFileCreationTask < Rake::TestCase
     assert ! fc_task.needed?, "file should not be needed"
   end
 
-  def test_directory
-    directory DUMMY_DIR
-    fc_task = Task[DUMMY_DIR]
-    assert_equal DUMMY_DIR, fc_task.name
-    assert FileCreationTask === fc_task
-  end
-
   def test_no_retriggers_on_filecreate_task
     create_timed_files(OLDFILE, NEWFILE)
     t1 = Rake.application.intern(FileCreationTask, OLDFILE).enhance([NEWFILE])
