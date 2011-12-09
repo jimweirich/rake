@@ -25,6 +25,26 @@ class TestRakeDirectoryTask < Rake::TestCase
     refute File.exist?("a/b/c")
   end
 
+  def test_lookup_ignores_trailing_slash
+    Dir.mkdir "a"
+
+    # Since "a" exists, if we lookup "a", TaskManager creates an
+    # implicit FileTask (barring any other tasks named "a")
+    refute Task.task_defined? "a"
+    assert_instance_of Rake::FileTask, Task["a"]
+    assert Task.task_defined? "a"
+
+    # Rake.each_dir_parent will yield "a/"
+    directory "a/"
+
+    # "a" and "a/" should both point to the FileCreationTask defined
+    # by the directory task
+    assert_instance_of Rake::FileCreationTask, Task["a/"]
+
+    refute_instance_of Rake::FileTask,         Task["a"]
+    assert_instance_of Rake::FileCreationTask, Task["a"]
+  end
+
   if Rake::Win32.windows?
     def test_directory_win32
       drive = Dir.pwd
@@ -35,7 +55,12 @@ class TestRakeDirectoryTask < Rake::TestCase
 
       desc "WIN32 DESC"
       directory File.join(Dir.pwd, 'a/b/c')
-      assert_equal FileTask, Task[drive].class if drive[-1] == ?:
+
+      if drive[-1] == ?:
+        assert_equal FileTask, Task[drive].class
+        assert_equal FileCreationTask, Task[drive + ?/].class
+      end
+
       assert_equal FileCreationTask, Task[File.join(Dir.pwd, 'a')].class
       assert_equal FileCreationTask, Task[File.join(Dir.pwd, 'a/b')].class
       assert_equal FileCreationTask, Task[File.join(Dir.pwd, 'a/b/c')].class
