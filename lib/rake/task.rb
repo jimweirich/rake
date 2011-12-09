@@ -89,6 +89,12 @@ module Rake
       self
     end
 
+    # Aliases +other_task_name+ so that lookups for it result in this
+    # task being returned.
+    def alias_task(other_task_name)
+      application.alias_task(other_task_name, name)
+    end
+
     # Name of the task, including any namespace qualifiers.
     def name
       @name.to_s

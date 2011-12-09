@@ -34,6 +34,10 @@ module Rake
       task.enhance(deps, &block)
     end
 
+    def alias_task(other_task_name, task_name)
+      @tasks[other_task_name.to_s] = @tasks[task_name.to_s]
+    end
+
     # Lookup a task.  Return an existing task if found, otherwise
     # create a task of the current type.
     def intern(task_class, task_name)
