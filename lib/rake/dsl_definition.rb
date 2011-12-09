@@ -64,9 +64,12 @@ module Rake
     #
     def directory(dir)
       Rake.each_dir_parent(dir) do |d|
+        # append slash if no trailing slash; otherwise, strip it
+        d_alias = d[-1] == ?/ ? d[0...-1] : d + ?/
+
         file_create d do |t|
           mkdir_p t.name if ! File.exist?(t.name)
-        end
+        end.alias_task(d_alias)
       end
     end
 
