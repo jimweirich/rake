@@ -171,10 +171,12 @@ module Rake
 
     # Invoke all the prerequisites of a task.
     def invoke_prerequisites(task_args, invocation_chain) # :nodoc:
+      original_size=prerequisite_tasks.size
       prerequisite_tasks.each { |prereq|
         prereq_args = task_args.new_scope(prereq.arg_names)
         prereq.invoke_with_call_chain(prereq_args, invocation_chain)
       }
+      invoke_prerequisites(task_args, invocation_chain) if prerequisite_tasks.size != original_size
     end
 
     # Format the trace flags for display.
