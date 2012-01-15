@@ -11,7 +11,7 @@ module Rake
         Thread.new(p) { |r| application[r, @scope].invoke_with_call_chain(args, invocation_chain) }
       }
       threads.each { |t| t.join }
-      invoke_prerequisites(task_args, invocation_chain) if prerequisite_tasks.size != original_size
+      invoke_prerequisites(args, invocation_chain) if prerequisite_tasks.size != original_size
     end
   end
 
