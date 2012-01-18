@@ -171,14 +171,18 @@ module Rake
 
     # Invoke all the prerequisites of a task.
     def invoke_prerequisites(task_args, invocation_chain) # :nodoc:
-      original_size=prerequisite_tasks.size
-      prerequisite_tasks.each { |prereq|
+      original=prerequisite_tasks.dup
+      invoke_prerequisite_list(prerequisite_tasks,task_args,invocation_chain)
+      invoke_prerequisite_list(prerequisite_tasks-original,task_args,invocation_chain)
+    end
+    
+    def invoke_prerequisite_list prereqs,task_args,invocation_chain
+      prereqs.each { |prereq|
         prereq_args = task_args.new_scope(prereq.arg_names)
         prereq.invoke_with_call_chain(prereq_args, invocation_chain)
       }
-      invoke_prerequisites(task_args, invocation_chain) if prerequisite_tasks.size != original_size
     end
-
+    private :invoke_prerequisite_list
     # Format the trace flags for display.
     def format_trace_flags
       flags = []
