@@ -1,5 +1,5 @@
 module Rake
-  VERSION = '0.9.3.dev'
+  VERSION = '0.9.3'
 
   module Version # :nodoc: all
     MAJOR, MINOR, BUILD, PATCH = VERSION.split('.')
