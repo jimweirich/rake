@@ -210,7 +210,8 @@ module Rake
       }
       case options.show_tasks
       when :tasks
-        width = displayable_tasks.collect { |t| t.name_with_args.length }.max || 10
+        width_string = displayable_tasks.collect { |t| t.name_with_args.length }.max || 10
+        width = (width_string.to_s).size
         max_column = truncate_output? ? terminal_width - name.size - width - 7 : nil
 
         displayable_tasks.each do |t|
@@ -269,7 +270,7 @@ module Rake
     end
 
     def truncate(string, width)
-      if string.length <= width
+      if string.length.to_i <= width
         string
       else
         ( string[0, width-3] || "" ) + "..."
