@@ -41,9 +41,9 @@ Options are:
     Specifies the maximum number of concurrent tasks. The suggested
     value is equal to the number of CPUs.
     
-    default: unlimited concurrent tasks (standard rake behavior)
-    0: No concurrent tasks (single threaded)
-    1: 2 concurrent tasks (main thread + thread pool of 1)
+    Sample values:
+     default: unlimited concurrent tasks (standard rake behavior)
+     1: one task at a time
 
 [<tt>--libdir</tt> _directory_  (-I)]
     Add _directory_ to the list of directories searched for require.

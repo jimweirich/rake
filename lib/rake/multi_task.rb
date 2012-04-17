@@ -51,7 +51,9 @@ module Rake
         }
         
         # Here, we only create a new thread if we are under the max number of threads
-        if @@thread_group.list.count < max_concurrent_jobs
+        @@thread_pool_size ||= application.options.max_concurrent_jobs - 1
+
+        if @@thread_group.list.count < @@thread_pool_size
           @@thread_group.add Thread.new {
             begin
 
