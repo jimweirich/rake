@@ -325,6 +325,10 @@ module Rake
           "Execute some Ruby code, then continue with normal task processing.",
           lambda { |value| eval(value) }
         ],
+        ['--jobs',  '-j max-jobs',
+          "Specify a maximum number of concurrent jobs.",
+          lambda { |value| options.max_concurrent_jobs = value.to_i }
+        ],
         ['--libdir', '-I LIBDIR', "Include LIBDIR in the search path for required modules.",
           lambda { |value| $:.push(value) }
         ],
