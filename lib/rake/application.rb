@@ -329,10 +329,10 @@ module Rake
           "Specify a maximum number of concurrent jobs. (0 = single-threaded). Suggested value: the number of CPUs.",
           lambda { |value|
             value_i = value.to_i
-            if ( value_i.to_s == value )
-              options.max_concurrent_jobs = value_i
+            if ( value_i.to_s == value && value_i >= 0 )
+              options.max_concurrent_jobs = [value_i,0].max
             else
-              puts "received '-j #{value}'. '#{value}' should be an integer"
+              puts "received '-j #{value}'. '#{value}' should be a non-negative integer"
             end
           }
         ],
