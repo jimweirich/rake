@@ -14,85 +14,51 @@ module Rake
   class MultiTask < Task
 
     private
-
-    @@multi_task_queue = Queue.new
-    @@thread_group = ThreadGroup.new
-
     def invoke_prerequisites(args, invocation_chain)
+      blocks = @prerequisites.collect { |r| lambda{ application[r, @scope].invoke_with_call_chain(args, invocation_chain) } }
+
       if ( application.options.max_concurrent_jobs == nil )
-        invoke_prerequisites_unlimited_threads(args, invocation_chain)
-      else
-        invoke_prerequisites_thread_limit(args, invocation_chain, application.options.max_concurrent_jobs)
+        threads = blocks.collect { |block| Thread.new {block.call} }
+        threads.each { |t| t.join }
+        return
       end
-    end
 
-    def invoke_prerequisites_unlimited_threads(args, invocation_chain)
-      threads = @prerequisites.collect { |p|
-        Thread.new(p) { |r| application[r, @scope].invoke_with_call_chain(args, invocation_chain) }
-      }
-      threads.each { |t| t.join }
-    end
+      @@block_queue ||= Queue.new
+      @@thread_pool ||= ThreadGroup.new
 
-    def invoke_prerequisites_thread_limit(args, invocation_chain, max_concurrent_jobs)
-
-      unfinished_task_count = 0
-      unfinished_task_threads = Set.new
-      unfinished_task_semaphore = Mutex.new
+      block_count = blocks.count
+      block_threads = Set.new
+      blocks_info_semaphore = Mutex.new
       
-      @prerequisites.each do |r|
-        unfinished_task_semaphore.synchronize { unfinished_task_count += 1 }
-
-        @@multi_task_queue.enq lambda {
-          unfinished_task_semaphore.synchronize { unfinished_task_threads.add Thread.current }
-
-          application[r, @scope].invoke_with_call_chain(args, invocation_chain)
-
-          unfinished_task_semaphore.synchronize { unfinished_task_count -= 1; unfinished_task_threads.delete Thread.current}
+      blocks.each do |block|
+        @@block_queue.enq lambda {
+          blocks_info_semaphore.synchronize { block_threads.add(Thread.current) }
+          block.call
+          blocks_info_semaphore.synchronize { block_threads.delete(Thread.current); block_count -= 1 }
         }
         
-        # Here, we only create a new thread if we are under the max number of threads
-        @@thread_pool_size ||= application.options.max_concurrent_jobs - 1
-
-        if @@thread_group.list.count < @@thread_pool_size
-          @@thread_group.add Thread.new {
-            begin
-
-              while something = @@multi_task_queue.deq(true)
-                something.call
-              end
-
-            rescue ThreadError
-              # We are here because there was nothing left on the queue so we exit
-            end
-          }
-        end
-
-      end
-
-      # while we wait for our tasks to complete, we process tasks
-      # ourselves to avoid deadlock.
-      # If there are no more blocks for use to execute and our tasks
-      # are stil not completed, it's because there are other threads
-      # still working on our tasks. Since we know the set of threads
-      # that are currently working on our tasks
-      # (unfinished_task_threads) we join them and wait for them to
-      # finish
-      
-      while (unfinished_task_count > 0)
-        begin
-
-          while something = @@multi_task_queue.deq(true)
-            something.call
-          end
-        rescue ThreadError
-            # We are here because there was nothing left on the queue so we wait for
-            # threads processing our prerequisites
-            threads_copy = nil
-            unfinished_task_semaphore.synchronize { threads_copy = unfinished_task_threads.dup }
-            threads_copy.each {|thread| thread.join}
+        if @@thread_pool.list.count < (application.options.max_concurrent_jobs - 1)
+          @@thread_pool.add Thread.new { process_all_blocks }
         end
       end
+
+      process_all_blocks_until { block_count == 0 }
+      blocks_info_semaphore.synchronize { block_threads.dup }.each {|thread| thread.join}
       
-    end # @prerequisites.each
-  end # invoke_prerequisites_thread_limit
-end # Rake
+    end
+    
+    def process_all_blocks_until
+      begin
+        while (!yield && something = @@block_queue.deq(true))
+          something.call
+        end
+      rescue ThreadError
+      end
+    end
+    
+    def process_all_blocks
+      process_all_blocks_until {false}
+    end
+
+  end
+end
