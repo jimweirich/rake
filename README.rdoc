@@ -79,8 +79,6 @@ Type "rake --help" for all available options.
 
 === More Information
 
-* For details on Rake's command-line invocation, read
-  doc/command_line_usage.rdoc[http://rake.rubyforge.org/files/doc/command_line_usage_rdoc.html]
 * For details on writing Rakefiles, see
   doc/rakefile.rdoc[http://rake.rubyforge.org/files/doc/rakefile_rdoc.html].
 * For the original announcement of Rake, see
