@@ -93,6 +93,20 @@ class TestRakeApplication < Rake::TestCase
     assert_match(/# 12345678901234567890123456789012345678901234567890123456789012345\.\.\./, out)
   end
 
+  def test_display_all_tasks
+    @app.options.show_tasks = :tasks
+    @app.options.include_hidden_tasks = true
+    @app.options.show_task_pattern = //
+    @app.last_description = "COMMENT"
+    @app.define_task(Rake::Task, "t")
+    @app.last_description = nil
+    @app.define_task(Rake::Task, "h")
+    out, = capture_io do @app.instance_eval { display_tasks_and_comments } end
+    assert_match(/^rake t/, out)
+    assert_match(/# COMMENT/, out)
+    assert_match(/^rake h/, out)
+  end
+
   def test_describe_tasks
     @app.options.show_tasks = :describe
     @app.options.show_task_pattern = //
@@ -101,6 +115,20 @@ class TestRakeApplication < Rake::TestCase
     out, = capture_io do @app.instance_eval { display_tasks_and_comments } end
     assert_match(/^rake t$/, out)
     assert_match(/^ {4}COMMENT$/, out)
+  end
+
+  def test_describe_all_tasks
+    @app.options.show_tasks = :describe
+    @app.options.include_hidden_tasks = true
+    @app.options.show_task_pattern = //
+    @app.last_description = "COMMENT"
+    @app.define_task(Rake::Task, "t")
+    @app.last_description = nil
+    @app.define_task(Rake::Task, "h")
+    out, = capture_io do @app.instance_eval { display_tasks_and_comments } end
+    assert_match(/^rake t$/, out)
+    assert_match(/^ {4}COMMENT$/, out)
+    assert_match(/^rake h$/, out)
   end
 
   def test_show_lines

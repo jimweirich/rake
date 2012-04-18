@@ -220,6 +220,12 @@ class TestRakeApplicationOptions < Rake::TestCase
     end
   end
 
+  def test_include_hidden_tasks
+    flags('--include-hidden-tasks') do |opts|
+      assert_equal true, opts.include_hidden_tasks
+    end
+  end
+
   def test_where
     flags('--where', '-W') do |opts|
       assert_equal :lines, opts.show_tasks

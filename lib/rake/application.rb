@@ -206,7 +206,7 @@ module Rake
     # Display the tasks and comments.
     def display_tasks_and_comments
       displayable_tasks = tasks.select { |t|
-        t.comment && t.name =~ options.show_task_pattern
+        options.include_hidden_tasks || (t.comment && (t.name =~ options.show_task_pattern))
       }
       case options.show_tasks
       when :tasks
@@ -220,7 +220,7 @@ module Rake
       when :describe
         displayable_tasks.each do |t|
           puts "#{name} #{t.name_with_args}"
-          t.full_comment.split("\n").each do |line|
+          t.full_comment.to_s.split("\n").each do |line|
             puts "    #{line}"
           end
           puts
@@ -269,6 +269,7 @@ module Rake
     end
 
     def truncate(string, width)
+      string = string.to_s
       if string.length <= width
         string
       else
@@ -324,6 +325,11 @@ module Rake
         ['--execute-continue',  '-E CODE',
           "Execute some Ruby code, then continue with normal task processing.",
           lambda { |value| eval(value) }
+        ],
+          ['--include-hidden-tasks', "Include tasks without descriptions when displaying or describing tasks.",
+          lambda { |value|
+            options.include_hidden_tasks = true
+          }
         ],
         ['--libdir', '-I LIBDIR', "Include LIBDIR in the search path for required modules.",
           lambda { |value| $:.push(value) }
