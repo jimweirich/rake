@@ -31,11 +31,19 @@ Options are:
 [<tt>--execute-print</tt> _code_ (-p)]
     Execute some Ruby code, print the result, and exit.
 
-[<tt>--execute-continue</tt> _code_ (-p)]
+[<tt>--execute-continue</tt> _code_ (-E)]
     Execute some Ruby code, then continue with normal task processing.
 
 [<tt>--help</tt>  (-H)]
     Display some help text and exit.
+
+[<tt>--jobs</tt> _number_  (-j)]
+    Specifies the maximum number of concurrent tasks. The suggested
+    value is equal to the number of CPUs.
+    
+    Sample values:
+     default: unlimited concurrent tasks (standard rake behavior)
+     1: one task at a time
 
 [<tt>--libdir</tt> _directory_  (-I)]
     Add _directory_ to the list of directories searched for require.
