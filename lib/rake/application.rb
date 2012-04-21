@@ -47,6 +47,7 @@ module Rake
       add_loader('rake', DefaultLoader.new)
       @tty_output = STDOUT.tty?
       @terminal_columns = ENV['RAKE_COLUMNS'].to_i
+      options.thread_pool_size = (2**(0.size * 8 - 2) - 1) # FIXNUM_MAX
     end
 
     # Run the Rake application.  The run method performs the following
@@ -324,6 +325,17 @@ module Rake
         ['--execute-continue',  '-E CODE',
           "Execute some Ruby code, then continue with normal task processing.",
           lambda { |value| eval(value) }
+        ],
+        ['--jobs',  '-j NUMBER',
+          "Specifies the maximum number of tasks to execute in parallel.",
+          lambda { |value|
+            value_i = value.to_i
+            if ( value_i.to_s == value && value_i > 0 )
+              options.thread_pool_size = value_i - 1
+            else
+              puts "received '-j #{value}'. '#{value}' should be a positive integer"
+            end
+          }
         ],
         ['--libdir', '-I LIBDIR', "Include LIBDIR in the search path for required modules.",
           lambda { |value| $:.push(value) }
