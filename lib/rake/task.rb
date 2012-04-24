@@ -1,4 +1,5 @@
 require 'rake/invocation_exception_mixin'
+require 'rake/worker_pool'
 
 module Rake
 
@@ -198,11 +199,12 @@ module Rake
       end
       application.enhance_with_matching_rule(name) if @actions.empty?
       @actions.each do |act|
+        @@worker_pool ||= WorkerPool.new(application.options.thread_pool_size)
         case act.arity
         when 1
-          act.call(self)
+           @@worker_pool.execute_block {act.call(self)}
         else
-          act.call(self, args)
+           @@worker_pool.execute_block {act.call(self, args)}
         end
       end
     end
