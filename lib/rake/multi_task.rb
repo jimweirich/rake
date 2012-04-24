@@ -1,3 +1,5 @@
+require 'rake/worker_pool'
+
 module Rake
 
   # Same as a regular task, but the immediate prerequisites are done in
@@ -6,10 +8,12 @@ module Rake
   class MultiTask < Task
     private
     def invoke_prerequisites(args, invocation_chain)
-      threads = @prerequisites.collect { |p|
-        Thread.new(p) { |r| application[r, @scope].invoke_with_call_chain(args, invocation_chain) }
+      @@wp ||= WorkerPool.new
+    
+      blocks = @prerequisites.collect { |r|
+        lambda { application[r, @scope].invoke_with_call_chain(args, invocation_chain) }
       }
-      threads.each { |t| t.join }
+      @@wp.execute_blocks blocks
     end
   end
 

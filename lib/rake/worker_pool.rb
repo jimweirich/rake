@@ -7,36 +7,41 @@ module Rake
 
     def initialize(max = nil)
       @threads = Set.new          # this holds the set of threads in the pool
-      @threads_mutex = Mutex.new  # use this whenever r/w @threads
+      @ready_threads = Set.new    # this holds the set of threads awaiting work
+      @threads_mutex = Mutex.new  # use this whenever r/w @threads, @ready_threads
       @queue = Queue.new          # this holds blocks to be executed
       @wait_cv = ConditionVariable.new # alerts threads sleeping from calling #wait
       if (max && max > 0)
-        self.maximum_size= max
+        @maximum_size= max
       else
-        self.maximum_size= (2**(0.size * 8 - 2) - 1) # FIXNUM_MAX
+        @maximum_size= (2**(0.size * 8 - 2) - 1) # FIXNUM_MAX
       end
     end
 
-    def execute_block(&block)
+    def execute_blocks(blocks)
       mutex = Mutex.new
       cv = ConditionVariable.new
       exception = nil
-      
+      remaining = blocks.size
       mutex.synchronize {
-        @queue.enq lambda {
-          begin
-            block.call
-          rescue Exception => e
-            exception = e
-          ensure
-            # we *have* to have this 'ensure' because we *have* to
-            # call cv.signal to wake up WorkerPool#execute_block
-            # which is asleep because it called cv.wait(mutex)
-            mutex.synchronize{ cv.signal }
-          end
+        blocks.each { |block|
+          @queue.enq lambda {
+            begin
+              block.call
+            rescue Exception => e
+              exception = e
+            ensure
+              # we *have* to have this 'ensure' because we *have* to
+              # call cv.signal to wake up WorkerPool#execute_block
+              # which is asleep because it called cv.wait(mutex)
+              mutex.synchronize { remaining -= 1; cv.signal }
+            end
+          }
+          add_thread
         }
-        add_thread
-        cv.wait(mutex)
+        while remaining > 0
+          cv.wait(mutex)
+        end
       }
       if exception
         # IMPORTANT: In order to trace execution through threads,
@@ -53,26 +58,37 @@ module Rake
         #            |
         #   caller (in our context)
         #
+        # TODO: remove all portions of the backtrace that involve this
+        #       file, but retain a list of full backtraces (in order)
+        #       for the exception in each context. add (or use) an
+        #       inspec method that shows the list of full backtraces
         exception.set_backtrace exception.backtrace.concat(caller)
         raise exception
       end
     end
+
+    def execute_block(&block)
+      execute_blocks [block]
+    end
     
     def add_thread
       @threads_mutex.synchronize {
-        if @threads.size >= self.maximum_size
+        if @threads.size >= @maximum_size || @ready_threads.size > 0
           next
         end
         t = Thread.new do
           begin
-            while @threads.size <= self.maximum_size
+            while @threads.size <= @maximum_size
+              @threads_mutex.synchronize{ @ready_threads.add(Thread.current) }
               @queue.deq.call
+              @threads_mutex.synchronize{ @ready_threads.delete(Thread.current) }
             end
           ensure
             # we *have* to have this 'ensure' because we *have* to
             # call @wait_cv.signal. This wakes up the Thread
             # that is sleeping because it called WorkerPool#wait
             @threads_mutex.synchronize{
+              @ready_threads.delete(Thread.current)
               @threads.delete(Thread.current)
               @wait_cv.signal
             }
@@ -83,27 +99,5 @@ module Rake
     end
     private :add_thread
     
-    def wait
-      # we synchronize on @threads_mutex because we don't want
-      # any threads added while we wait, only removed
-      # we set the maximum size to 0 and then add enough blocks to the
-      # queue so any sleeping threads will wake up and notice there are
-      # more threads than the limit and exit
-      @threads_mutex.synchronize {
-        saved_maximum_size, @maximum_size = @maximum_size, 0
-        @threads.each { @queue.enq lambda { ; } } # wake them all up
-        # here, we sleep and wait for a signal off @wait_cv
-        # we will get it once for each sleeping thread so we watch the
-        # thread count
-        while (@threads.size > 0)
-          @wait_cv.wait(@threads_mutex)
-        end
-        
-        # now everything has been executed and we are ready to
-        # start accepting more work so we raise the limit back
-        @maximum_size = saved_maximum_size
-      }
-    end
-
   end
 end
