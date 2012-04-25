@@ -1,6 +1,3 @@
-require 'thread'
-require 'set'
-
 module Rake
 
   # Same as a regular task, but the immediate prerequisites are done in
