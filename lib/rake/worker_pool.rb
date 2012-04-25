@@ -7,12 +7,14 @@ module Rake
 
     def initialize(max = nil)
       @threads = Set.new          # this holds the set of threads in the pool
+      @waiting_threads = Set.new  # set of threads waiting in #execute_blocks
       @threads_mutex = Mutex.new  # use this whenever r/w @threads
       @queue = Queue.new          # this holds blocks to be executed
+      @join_cv = ConditionVariable.new # alerts threads sleeping from calling #join
       if (max && max > 0)
-        @maximum_size= max
+        @maximum_size = max
       else
-        @maximum_size= 2          # why bother if it's not at least 2?
+        @maximum_size = (2**(0.size * 8 - 2) - 1) # FIXNUM_MAX
       end
     end
 
@@ -20,7 +22,7 @@ module Rake
       mutex = Mutex.new
       cv = ConditionVariable.new
       exception = nil
-      unprocessed_block_count = blocks.size
+      unprocessed_block_count = blocks.count
       mutex.synchronize {
         blocks.each { |block|
           @queue.enq lambda {
@@ -36,35 +38,30 @@ module Rake
             end
           }
         }
-        was_in_set = @threads_mutex.synchronize { @threads.delete? Thread.current }
-        ensure_enough_threads
+        was_in_set = @threads_mutex.synchronize {
+          @waiting_threads.add(Thread.current)
+          @threads.delete? Thread.current
+        }
+        ensure_thread_count(blocks.count)
         cv.wait(mutex) until unprocessed_block_count == 0
-        @threads_mutex.synchronize { @threads.add Thread.current } if was_in_set
+        @threads_mutex.synchronize {
+          @waiting_threads.delete(Thread.current)
+          @threads.add(Thread.current) if was_in_set
+          # shutdown the thread pool if we were the last thread
+          # waiting on the thread pool to process blocks
+          join if @waiting_threads.count == 0
+        }
       }
-      # IMPORTANT: In order to trace execution through threads,
-      # we concatenate the backtrace of the exception (thrown in a
-      # different context), with the backtrace of the
-      # current context. In this way, you can see the backtrace
-      # all the way through from when you called #execute_block
-      # to where it was raised in the thread that was executing
-      # that block.
-      #
-      # backtrace looks like this:
-      #   exception.backtrace (in original thread context)
-      #            |
-      #            |
-      #   caller (in our context)
-      if exception
-        exception.set_backtrace exception.backtrace.concat(caller)
-        raise exception
-      end
+      # raise any exceptions that arose in the block (the last
+      # exception won)
+      raise exception if exception
     end
 
-    def ensure_enough_threads
+    def ensure_thread_count(count)
       # here, we need to somehow make sure to add as many threads as
       # are needed and no more. So (blocks.size - ready threads)
       @threads_mutex.synchronize {
-        threads_needed = [@maximum_size - @threads.size, 0].max
+        threads_needed = [[@maximum_size,count].min - @threads.size, 0].max
         threads_needed.times do
           t = Thread.new do
             begin
@@ -72,14 +69,43 @@ module Rake
                 @queue.deq.call
               end
             ensure
-              @threads_mutex.synchronize { @threads.delete(Thread.current) }
+              @threads_mutex.synchronize {
+                @threads.delete(Thread.current)
+                @join_cv.signal
+              }
             end
           end
           @threads.add t
         end
       }
     end
-    private :ensure_enough_threads
+    private :ensure_thread_count
     
+    def join
+      # *** MUST BE CALLED inside @threads_mutex.synchronize{}
+      # because we don't want any threads added while we wait, only
+      # removed we set the maximum size to 0 and then add enough blocks
+      # to the queue so any sleeping threads will wake up and notice
+      # there are more threads than the limit and exit
+      saved_maximum_size, @maximum_size = @maximum_size, 0
+      @threads.each { @queue.enq lambda { ; } } # wake them all up
+
+      # here, we sleep and wait for a signal off @join_cv
+      # we will get it once for each sleeping thread so we watch the
+      # thread count
+      #
+      # avoid the temptation to change this to
+      # "<code> until <condition>". The condition needs to checked
+      # first or you will deadlock.
+      while (@threads.size > 0)
+        @join_cv.wait(@threads_mutex)
+      end
+      
+      # now everything has been executed and we are ready to
+      # start accepting more work so we raise the limit back
+      @maximum_size = saved_maximum_size
+    end
+    private :join
+
   end
 end
