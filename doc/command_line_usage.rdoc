@@ -42,14 +42,15 @@ Options are:
     value is equal to the number of CPUs.
     
     Sample values:
-     default: unlimited concurrent tasks (standard rake behavior)
-     1: one task at a time
+     no -j   : unlimited concurrent tasks (standard rake behavior)
+     only -j : 2 concurrent tasks
+     -j 16   : 16 concurrent tasks
 
 [<tt>--libdir</tt> _directory_  (-I)]
     Add _directory_ to the list of directories searched for require.
 
 [<tt>--multitask</tt> (-m)]
-    Treat all tasks as multitasks. ('make' semantics)
+    Treat all tasks as multitasks. ('make/drake' semantics)
 
 [<tt>--nosearch</tt>  (-N)]
     Do not search for a Rakefile in parent directories.

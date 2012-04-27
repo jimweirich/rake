@@ -172,10 +172,14 @@ module Rake
 
     # Invoke all the prerequisites of a task.
     def invoke_prerequisites(task_args, invocation_chain) # :nodoc:
-      prerequisite_tasks.each { |prereq|
-        prereq_args = task_args.new_scope(prereq.arg_names)
-        prereq.invoke_with_call_chain(prereq_args, invocation_chain)
-      }
+      if application.options.always_multitask
+        invoke_prerequisites_concurrently(task_args, invocation_chain)
+      else
+        prerequisite_tasks.each { |prereq|
+          prereq_args = task_args.new_scope(prereq.arg_names)
+          prereq.invoke_with_call_chain(prereq_args, invocation_chain)
+        }
+      end
     end
 
     def invoke_prerequisites_concurrently(args, invocation_chain)

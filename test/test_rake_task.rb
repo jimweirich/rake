@@ -223,6 +223,25 @@ class TestRakeTask < Rake::TestCase
     assert_in_delta now + 10, a.timestamp, 0.1, 'computer too slow?'
   end
 
+  def test_all_multitask
+    mx = Mutex.new
+    result = ""
+    root = task :root
+    ('aa'..'zz').each do |c|
+      task(c.to_sym) { mx.synchronize{ result << c } }
+      task(:root => c.to_sym)
+    end
+    root.invoke
+
+    root.prerequisite_tasks.each { |p| p.reenable };
+    root.reenable
+    task_result = result.dup; result.clear
+    
+    Rake.application.options.always_multitask = true
+    root.invoke
+    refute_equal task_result, result
+  end
+
   def test_investigation_output
     t1 = task(:t1 => [:t2, :t3]) { |t| runlist << t.name; 3321 }
     task(:t2)
