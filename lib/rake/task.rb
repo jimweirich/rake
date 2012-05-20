@@ -170,12 +170,20 @@ module Rake
     private :add_chain_to
 
     # Invoke all the prerequisites of a task.
+    #
+    # Re-evaluates the prerequisite list after each run through to
+    #check if prerequisites have been added and invokes the additions
     def invoke_prerequisites(task_args, invocation_chain) # :nodoc:
-      original=prerequisite_tasks.dup
+      initial_prereqs=prerequisite_tasks.dup
       invoke_prerequisite_list(prerequisite_tasks,task_args,invocation_chain)
-      invoke_prerequisite_list(prerequisite_tasks-original,task_args,invocation_chain)
+      prereqs_to_invoke=prerequisite_tasks-initial_prereqs
+      while !(prereqs_to_invoke).empty?
+        initial_prereqs=prerequisite_tasks.dup
+        invoke_prerequisite_list(prereqs_to_invoke,task_args,invocation_chain)
+        prereqs_to_invoke=prerequisite_tasks-initial_prereqs
+      end
     end
-    
+
     def invoke_prerequisite_list prereqs,task_args,invocation_chain
       prereqs.each { |prereq|
         prereq_args = task_args.new_scope(prereq.arg_names)
