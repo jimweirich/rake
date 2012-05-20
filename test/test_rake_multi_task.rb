@@ -47,5 +47,30 @@ class TestRakeMultiTask < Rake::TestCase
     assert @runs.index("B0") < @runs.index("B1")
     assert @runs.index("B1") < @runs.index("B2")
   end
+  
+  #Test the handling of prerequisite invocation when the list 
+  #of prerequisites for a task is changed by a prerequisite
+  def test_multitask_dynamic_prerequisites
+     runlist = []
+     #t1 depends on t2
+     t1 = multitask(:t1 => [:t2]) { |t| runlist << t.name; 3321 }
+     #t2 adds t3 to the t1 dependencies
+     t2 = task(:t2) { |t| task :t1=>:t3; runlist << t.name }
+     #t3 adds t4 to t2 and t5 to t1
+     #although it adds a prerequisite to t2 it will do so after t2 is executed
+     #so it should be ivnoked. t5 on the other hand should
+     t3 = task(:t3) { |t| task :t2=>:t4; task :t1=>:t5; runlist << t.name }
+     t4 = task(:t4) { |t| runlist << t.name }
+     t5 = task(:t5) { |t| runlist << t.name }
+     assert_equal ["t2"], t1.prerequisites
+     assert_equal [], t2.prerequisites
+     t1.invoke
+     assert_equal ["t2","t3","t5"], t1.prerequisites
+     #so, these have changed but not in time
+     #so you can't change prereqs on the same level
+     assert_equal ["t4"], t2.prerequisites
+     #but changing the prereqs of the "parent" works
+     assert_equal ["t2", "t3", "t5","t1"], runlist
+   end
 end
 
