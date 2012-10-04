@@ -7,6 +7,13 @@ class TestRakeDsl < Rake::TestCase
     Rake::Task.clear
   end
 
+  def test_namespace_command_nested_with_array
+    namespace ["a", "b", "c"] do
+      task "123"
+    end
+    refute_nil Rake::Task["a:b:c:123"]
+  end
+
   def test_namespace_command
     namespace "n" do
       task "t"

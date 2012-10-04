@@ -93,11 +93,25 @@ module Rake
     #   end
     #   task_run = ns[:run] # find :run in the given namespace.
     #
+    #   or
+    #
+    #   ns = namespace ["deeply", "nested"] do
+    #     task :run
+    #   end
+    #   task_run = ns[:run] # find :run in the given namespace.
     def namespace(name=nil, &block)
-      name = name.to_s if name.kind_of?(Symbol)
-      name = name.to_str if name.respond_to?(:to_str)
-      unless name.kind_of?(String) || name.nil?
-        raise ArgumentError, "Expected a String or Symbol for a namespace name"
+      process_name = lambda do |name|
+        name = name.to_s if name.kind_of?(Symbol)
+        name = name.to_str if name.respond_to?(:to_str)
+        unless name.kind_of?(String) || name.nil?
+          raise ArgumentError, "Expected a String or Symbol for a namespace name"
+        end
+        name
+      end
+      if name.kind_of?(Array)
+        name = name.map{|n| process_name.call(n)}.join(":")
+      else
+        name = process_name.call(name)
       end
       Rake.application.in_namespace(name, &block)
     end
