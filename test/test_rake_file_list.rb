@@ -342,7 +342,7 @@ class TestRakeFileList < Rake::TestCase
       files.egrep(/XYZZY/)
     end
 
-    assert_equal "xyzzy.txt:2:XYZZY\n", out
+    assert_equal "xyzzy.txt:2:XYZZY#{new_line}", out
   end
 
   def test_egrep_with_block
@@ -353,7 +353,7 @@ class TestRakeFileList < Rake::TestCase
       found = [fn, ln, line]
     end
 
-    assert_equal ["xyzzy.txt", 2, "XYZZY\n"], found
+    assert_equal ["xyzzy.txt", 2, "XYZZY#{new_line}"], found
   end
 
   def test_egrep_with_error
