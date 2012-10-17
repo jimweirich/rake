@@ -25,22 +25,23 @@ class TestRakeDirectoryTask < Rake::TestCase
     refute File.exist?("a/b/c")
   end
 
-  if Rake::Win32.windows?
-    def test_directory_win32
-      desc "WIN32 DESC"
-      directory 'c:/a/b/c'
-      assert_equal FileTask, Task['c:'].class
-      assert_equal FileCreationTask, Task['c:/a'].class
-      assert_equal FileCreationTask, Task['c:/a/b'].class
-      assert_equal FileCreationTask, Task['c:/a/b/c'].class
-      assert_nil             Task['c:/'].comment
-      assert_equal "WIN32 DESC",   Task['c:/a/b/c'].comment
-      assert_nil             Task['c:/a/b'].comment
-      verbose(false) {
-        Task['c:/a/b'].invoke
-      }
-      assert File.exist?('c:/a/b')
-      refute File.exist?('c:/a/b/c')
-    end
+  def test_lookup_ignores_trailing_slash
+    Dir.mkdir "a"
+
+    # Since "a" exists, if we lookup "a", TaskManager creates an
+    # implicit FileTask (barring any other tasks named "a")
+    refute Task.task_defined? "a"
+    assert_instance_of Rake::FileTask, Task["a"]
+    assert Task.task_defined? "a"
+
+    # Rake.each_dir_parent will yield "a/"
+    directory "a/"
+
+    # "a" and "a/" should both point to the FileCreationTask defined
+    # by the directory task
+    assert_instance_of Rake::FileCreationTask, Task["a/"]
+
+    refute_instance_of Rake::FileTask,         Task["a"]
+    assert_instance_of Rake::FileCreationTask, Task["a"]
   end
 end
