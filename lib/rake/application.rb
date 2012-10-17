@@ -160,7 +160,7 @@ module Rake
     # Example:
     #    Rake.application.deprecate("import", "Rake.import", caller.first)
     #
-    def deprecate(old_usage, new_usage, call_site)
+    def deprecate(old_usage, new_usage, call_site = caller[1])
       return if options.ignore_deprecate
       $stderr.puts "WARNING: '#{old_usage}' is deprecated.  " +
         "Please use '#{new_usage}' instead.\n" +
