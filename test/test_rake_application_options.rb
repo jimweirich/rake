@@ -34,6 +34,7 @@ class TestRakeApplicationOptions < Rake::TestCase
     assert_nil opts.dryrun
     assert_nil opts.ignore_system
     assert_nil opts.load_system
+    assert_nil opts.always_multitask
     assert_nil opts.nosearch
     assert_equal ['rakelib'], opts.rakelib
     assert_nil opts.show_prereqs
@@ -41,6 +42,7 @@ class TestRakeApplicationOptions < Rake::TestCase
     assert_nil opts.show_tasks
     assert_nil opts.silent
     assert_nil opts.trace
+    assert_nil opts.thread_pool_size
     assert_equal ['rakelib'], opts.rakelib
     assert ! Rake::FileUtilsExt.verbose_flag
     assert ! Rake::FileUtilsExt.nowrite_flag
@@ -111,12 +113,30 @@ class TestRakeApplicationOptions < Rake::TestCase
     assert_equal :exit, @exit
   end
 
+  def test_jobs
+    flags(['--jobs', '4'], ['-j', '4']) do |opts|
+      assert_equal 4, opts.thread_pool_size
+    end
+    flags(['--jobs', 'asdas'], ['-j', 'asdas']) do |opts|
+      assert_equal 2, opts.thread_pool_size
+    end
+    flags('--jobs', '-j') do |opts|
+      assert_equal 2, opts.thread_pool_size
+    end
+  end
+
   def test_libdir
     flags(['--libdir', 'xx'], ['-I', 'xx'], ['-Ixx']) do |opts|
       $:.include?('xx')
     end
   ensure
     $:.delete('xx')
+  end
+
+  def test_multitask
+    flags('--multitask', '-m') do |opts|
+      assert_equal opts.always_multitask, true
+    end
   end
 
   def test_rakefile

@@ -1,4 +1,5 @@
 require 'rake/invocation_exception_mixin'
+require 'rake/worker_pool'
 
 module Rake
 
@@ -179,10 +180,23 @@ module Rake
 
     # Invoke all the prerequisites of a task.
     def invoke_prerequisites(task_args, invocation_chain) # :nodoc:
-      prerequisite_tasks.each { |prereq|
-        prereq_args = task_args.new_scope(prereq.arg_names)
-        prereq.invoke_with_call_chain(prereq_args, invocation_chain)
+      if application.options.always_multitask
+        invoke_prerequisites_concurrently(task_args, invocation_chain)
+      else
+        prerequisite_tasks.each { |prereq|
+          prereq_args = task_args.new_scope(prereq.arg_names)
+          prereq.invoke_with_call_chain(prereq_args, invocation_chain)
+        }
+      end
+    end
+
+    def invoke_prerequisites_concurrently(args, invocation_chain)
+      @@wp ||= WorkerPool.new(application.options.thread_pool_size)
+    
+      blocks = @prerequisites.collect { |r|
+        lambda { application[r, @scope].invoke_with_call_chain(args, invocation_chain) }
       }
+      @@wp.execute_blocks blocks
     end
 
     # Format the trace flags for display.
@@ -208,9 +222,9 @@ module Rake
       @actions.each do |act|
         case act.arity
         when 1
-          act.call(self)
+           act.call(self)
         else
-          act.call(self, args)
+           act.call(self, args)
         end
       end
     end

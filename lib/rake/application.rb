@@ -346,8 +346,15 @@ module Rake
           "Execute some Ruby code, then continue with normal task processing.",
           lambda { |value| eval(value) }
         ],
+        ['--jobs',  '-j [NUMBER]',
+          "Specifies the maximum number of tasks to execute in parallel. (default:2)",
+          lambda { |value| options.thread_pool_size = [(value || 2).to_i,2].max }
+        ],
         ['--libdir', '-I LIBDIR', "Include LIBDIR in the search path for required modules.",
           lambda { |value| $:.push(value) }
+        ],
+        ['--multitask', '-m', "Treat all tasks as multitasks.",
+          lambda { |value| options.always_multitask = true }
         ],
         ['--no-search', '--nosearch', '-N', "Do not search parent directories for the Rakefile.",
           lambda { |value| options.nosearch = true }
