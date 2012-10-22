@@ -158,7 +158,7 @@ module Rake
       new_chain = InvocationChain.append(self, invocation_chain)
       @lock.synchronize do
         if application.options.trace
-          $stderr.puts "** Invoke #{name} #{format_trace_flags}"
+          $stdout.puts "** Invoke #{name} #{format_trace_flags}"
         end
         return if @already_invoked
         @already_invoked = true
@@ -202,7 +202,7 @@ module Rake
         return
       end
       if application.options.trace
-        $stderr.puts "** Execute #{name}"
+        $stdout.puts "** Execute #{name}"
       end
       application.enhance_with_matching_rule(name) if @actions.empty?
       @actions.each do |act|
