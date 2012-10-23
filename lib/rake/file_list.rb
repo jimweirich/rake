@@ -209,7 +209,7 @@ module Rake
     end
 
     def resolve_add(fn)
-      case fn
+      case normalize_pathname(fn)
       when %r{[*?\[\{]}
         add_matching(fn)
       else
@@ -224,6 +224,12 @@ module Rake
     end
     private :resolve_exclude
 
+    # Stringify Pathname objects, primarily for regex operations
+    def normalize_pathname(path)
+      RUBY_VERSION < '1.9' ? path.to_s : File.path(path) if path
+    end
+    private :normalize_pathname
+
     # Return a new FileList with the results of running +sub+ against each
     # element of the original list.
     #
@@ -231,7 +237,7 @@ module Rake
     #   FileList['a.c', 'b.c'].sub(/\.c$/, '.o')  => ['a.o', 'b.o']
     #
     def sub(pat, rep)
-      inject(FileList.new) { |res, fn| res << fn.sub(pat,rep) }
+      inject(FileList.new) { |res, fn| res << normalize_pathname(fn).sub(pat,rep) }
     end
 
     # Return a new FileList with the results of running +gsub+ against each
@@ -242,18 +248,18 @@ module Rake
     #      => ['lib\\test\\file', 'x\\y']
     #
     def gsub(pat, rep)
-      inject(FileList.new) { |res, fn| res << fn.gsub(pat,rep) }
+      inject(FileList.new) { |res, fn| res << normalize_pathname(fn).gsub(pat,rep) }
     end
 
     # Same as +sub+ except that the original file list is modified.
     def sub!(pat, rep)
-      each_with_index { |fn, i| self[i] = fn.sub(pat,rep) }
+      each_with_index { |fn, i| self[i] = normalize_pathname(fn).sub(pat,rep) }
       self
     end
 
     # Same as +gsub+ except that the original file list is modified.
     def gsub!(pat, rep)
-      each_with_index { |fn, i| self[i] = fn.gsub(pat,rep) }
+      each_with_index { |fn, i| self[i] = normalize_pathname(fn).gsub(pat,rep) }
       self
     end
 
@@ -261,7 +267,7 @@ module Rake
     # new file list with the modified paths.  (See String#pathmap for
     # details.)
     def pathmap(spec=nil)
-      collect { |fn| fn.pathmap(spec) }
+      collect { |fn| normalize_pathname(fn).pathmap(spec) }
     end
 
     # Return a new FileList with <tt>String#ext</tt> method applied to
@@ -273,7 +279,7 @@ module Rake
     #
     # +ext+ is a user added method for the Array class.
     def ext(newext='')
-      collect { |fn| fn.ext(newext) }
+      collect { |fn| normalize_pathname(fn).ext(newext) }
     end
 
 
@@ -348,6 +354,7 @@ module Rake
 
     # Should the given file name be excluded?
     def exclude?(fn)
+      fn = normalize_pathname(fn)
       return true if @exclude_patterns.any? do |pat|
         case pat
         when Regexp

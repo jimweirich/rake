@@ -63,6 +63,12 @@ class TestRakeFileList < Rake::TestCase
       fl.sort
   end
 
+  def test_create_with_pathname_objects
+    fl = FileList.new(Pathname.glob("*.c"), "x")
+    assert_equal ["abc.c", "x.c", "xyz.c", "x"].sort,
+      fl.map { |pn| pn.to_s }.sort
+  end
+
   def test_include_with_another_array
     fl = FileList.new.include(["x", "y", "z"])
     assert_equal ["x", "y", "z"].sort, fl.sort
@@ -101,6 +107,13 @@ class TestRakeFileList < Rake::TestCase
     fl.include '*.c'
 
     assert_equal %w[abc.c x.c xyz.c], fl.sort
+  end
+
+  def test_match_pathname
+    fl = FileList.new
+    fl.include Pathname.new('*.c')
+
+    assert_equal %w[abc.c x.c xyz.c], fl.map { |p| p.to_s }.sort
   end
 
   def test_add_matching
@@ -145,7 +158,7 @@ class TestRakeFileList < Rake::TestCase
   end
 
   def test_exclude
-    fl = FileList['x.c', 'abc.c', 'xyz.c', 'existing']
+    fl = FileList['x.c', 'abc.c', Pathname.new('xyz.c'), 'existing']
     fl.each { |fn| touch fn, :verbose => false }
 
     x = fl.exclude(%r{^x.+\.})
@@ -241,6 +254,11 @@ class TestRakeFileList < Rake::TestCase
     assert_equal FileList, f3.class
     assert_equal ["abc.o", "x.o", "xyz.o"].sort,
       f3.sort
+    fl = FileList[Pathname.glob("*.c")]
+    f4 = fl.gsub(/\.c$/, ".o")
+    assert_equal FileList, f4.class
+    assert_equal ["abc.o", "x.o", "xyz.o"].sort,
+      f4.map { |pn| pn.to_s }.sort
   end
 
   def test_claim_to_be_a_kind_of_array
@@ -313,7 +331,12 @@ class TestRakeFileList < Rake::TestCase
 
   def test_filelist_ext
     assert_equal FileList['one.c', '.one.c'],
-      FileList['one.net', '.one'].ext('c')
+      FileList[Pathname.new('one.net'), '.one'].ext('c')
+  end
+
+  def test_filelist_pathmap
+    assert_equal FileList['one', '.one'],
+      FileList[Pathname.new('one.net'), '.one.c'].pathmap('%n')
   end
 
   def test_gsub
