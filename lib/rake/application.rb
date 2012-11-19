@@ -182,13 +182,18 @@ module Rake
       trace "(See full trace by running task with --trace)" unless options.backtrace
     end
 
-    # Warn about deprecated usage.
+    # Error on deprecated usage.
     #
     # Example:
     #    Rake.application.deprecate("import", "Rake.import", caller.first)
     #
+    # TODO: distinguish between deprecated usage which still works,
+    # and obsolete usage for which support has been removed.
+    #
     def deprecate(old_usage, new_usage, call_site)
-      fail "GONE"
+      fail "ERROR: '#{old_usage}' is no longer supported.  " +
+        "Please use '#{new_usage}' instead.\n" +
+        "    at #{call_site}"
       return if options.ignore_deprecate
       $stderr.puts "WARNING: '#{old_usage}' is deprecated.  " +
         "Please use '#{new_usage}' instead.\n" +
