@@ -117,11 +117,14 @@ class TestRakeApplicationOptions < Rake::TestCase
     flags(['--jobs', '4'], ['-j', '4']) do |opts|
       assert_equal 4, opts.thread_pool_size
     end
+    flags(['--jobs', '0'], ['-j', '0']) do |opts|
+      assert_equal 2, opts.thread_pool_size
+    end
     flags(['--jobs', 'asdas'], ['-j', 'asdas']) do |opts|
       assert_equal 2, opts.thread_pool_size
     end
     flags('--jobs', '-j') do |opts|
-      assert_equal 2, opts.thread_pool_size
+      assert_nil opts.thread_pool_size
     end
   end
 

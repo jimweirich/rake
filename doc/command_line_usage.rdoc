@@ -63,7 +63,7 @@ Options are:
 
     Sample values:
      (no -j) : 2 concurrent tasks (exact number may change)
-     -j      : 2 concurrent tasks (exact number may change)
+     -j      : unlimited concurrent tasks (standard rake behavior)
      -j 16   : 16 concurrent tasks
 
 [<tt>--job-stats</tt> _level_]
