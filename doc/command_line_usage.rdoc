@@ -62,7 +62,7 @@ Options are:
     multitasks.
 
     Sample values:
-     (no -j) : unlimited concurrent tasks (standard rake behavior)
+     (no -j) : 2 concurrent tasks (exact number may change)
      -j      : 2 concurrent tasks (exact number may change)
      -j 16   : 16 concurrent tasks
 

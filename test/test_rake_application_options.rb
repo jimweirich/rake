@@ -42,7 +42,7 @@ class TestRakeApplicationOptions < Rake::TestCase
     assert_nil opts.show_tasks
     assert_nil opts.silent
     assert_nil opts.trace
-    assert_nil opts.thread_pool_size
+    assert_equal 2, opts.thread_pool_size
     assert_equal ['rakelib'], opts.rakelib
     assert ! Rake::FileUtilsExt.verbose_flag
     assert ! Rake::FileUtilsExt.nowrite_flag

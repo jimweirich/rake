@@ -523,6 +523,7 @@ module Rake
     # Read and handle the command line options.
     def handle_options
       options.rakelib = ['rakelib']
+      options.thread_pool_size = 2
       options.trace_output = $stderr
 
       OptionParser.new do |opts|
