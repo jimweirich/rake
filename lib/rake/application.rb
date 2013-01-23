@@ -381,7 +381,7 @@ module Rake
           ],
           ['--jobs',  '-j [NUMBER]',
             "Specifies the maximum number of tasks to execute in parallel. (default:2)",
-            lambda { |value| options.thread_pool_size = [(value || 2).to_i,2].max }
+            lambda { |value| options.thread_pool_size =  value ? [value.to_i,2].max : nil }
           ],
           ['--job-stats [LEVEL]',
             "Display job statistics. LEVEL=history displays a complete job list",
@@ -513,6 +513,7 @@ module Rake
     # Read and handle the command line options.
     def handle_options
       options.rakelib = ['rakelib']
+      options.thread_pool_size = 2
       options.trace_output = $stderr
 
       OptionParser.new do |opts|
