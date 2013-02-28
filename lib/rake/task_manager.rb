@@ -103,22 +103,27 @@ module Rake
         task_name = args.shift
         arg_names = key
       end
-      if value.respond_to?(:to_ary)
-        namespace_hashes = []
-        value.delete_if { |x| namespace_hashes << x if x.is_a?(Hash) }
-        unless namespace_hashes.empty?
-          namespace_hashes = namespace_hashes.reduce {|previous, dependency_hash| previous.merge(dependency_hash) }
-          namespaced_dependencies = namespace_hashes.collect do |namespace, dependencies|
-            dependencies.collect { |dep| "#{namespace}:#{dep}" }
-          end
-          value.concat(namespaced_dependencies.flatten)
-        end
-      end
-      deps = value
+      deps = combine_namespace_shorthand_dependency_names(value)
       deps = [deps] unless deps.respond_to?(:to_ary)
       [task_name, arg_names, deps]
     end
     private :resolve_args_with_dependencies
+
+    # Combines namespace shorthand dependencies into namespaced tasks list
+    def combine_namespace_shorthand_dependency_names(task_dependencies)
+      if task_dependencies.respond_to?(:to_ary)
+        namespaces = task_dependencies.find_all { |x| x.is_a?(Hash) }
+        task_dependencies = task_dependencies - namespaces
+        unless namespaces.empty?
+          namespaces = namespaces.reduce {|previous, dependency_hash| previous.merge(dependency_hash) }
+          namespaced_dependencies = namespaces.collect do |namespace, dependencies|
+            dependencies.collect { |dep| "#{namespace}:#{dep}" }
+          end
+          task_dependencies.concat(namespaced_dependencies.flatten)
+        end
+      end
+      task_dependencies
+    end
 
     # If a rule can be found that matches the task name, enhance the
     # task with the prerequisites and actions from the rule.  Set the
