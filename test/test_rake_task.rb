@@ -220,6 +220,17 @@ class TestRakeTask < Rake::TestCase
     assert_equal [b, c], a.prerequisite_tasks
   end
 
+  def test_prerequiste_tasks_namespaces_shorthand
+    a = b = nil
+    namespace "X" do
+      a = task :a
+      b = task :b
+    end
+    c = task :c => ["X" => ["b", "a"]]
+
+    assert_equal [b, a], c.prerequisite_tasks
+  end
+
   def test_all_prerequisite_tasks_includes_all_prerequisites
     a = task :a => "b"
     b = task :b => ["c", "d"]
