@@ -102,7 +102,20 @@ module Rake
         task_name = args.shift
         arg_names = key
       end
-        deps = value
+      if value.respond_to?(:to_ary)
+        hashes = []
+        value.delete_if { |x| hashes << x if x.is_a?(Hash) }
+        unless hashes.empty?
+          namespaced_deps = []
+          hashes.each do |h|
+            h.each do |k, v|
+              namespaced_deps << v.map { |item| "#{k}:#{item}"}
+            end
+          end
+          value.concat(namespaced_deps.flatten) unless namespaced_deps.empty?
+        end
+      end
+      deps = value
       deps = [deps] unless deps.respond_to?(:to_ary)
       [task_name, arg_names, deps]
     end
