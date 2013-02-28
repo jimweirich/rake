@@ -107,13 +107,11 @@ module Rake
         namespace_hashes = []
         value.delete_if { |x| namespace_hashes << x if x.is_a?(Hash) }
         unless namespace_hashes.empty?
-          namespaced_dependencies = []
-          namespace_hashes.each do |h|
-            h.each do |k, v|
-              namespaced_dependencies.concat( v.map { |item| "#{k}:#{item}"} )
-            end
+          namespace_hashes = namespace_hashes.reduce {|previous, dependency_hash| previous.merge(dependency_hash) }
+          namespaced_dependencies = namespace_hashes.collect do |namespace, dependencies|
+            dependencies.collect { |dep| "#{namespace}:#{dep}" }
           end
-          value.concat(namespaced_dependencies)
+          value.concat(namespaced_dependencies.flatten)
         end
       end
       deps = value
