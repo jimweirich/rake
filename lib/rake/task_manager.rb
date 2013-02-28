@@ -103,16 +103,16 @@ module Rake
         arg_names = key
       end
       if value.respond_to?(:to_ary)
-        hashes = []
-        value.delete_if { |x| hashes << x if x.is_a?(Hash) }
-        unless hashes.empty?
-          namespaced_deps = []
-          hashes.each do |h|
+        namespace_hashes = []
+        value.delete_if { |x| namespace_hashes << x if x.is_a?(Hash) }
+        unless namespace_hashes.empty?
+          namespaced_dependencies = []
+          namespace_hashes.each do |h|
             h.each do |k, v|
-              namespaced_deps << v.map { |item| "#{k}:#{item}"}
+              namespaced_dependencies.concat( v.map { |item| "#{k}:#{item}"} )
             end
           end
-          value.concat(namespaced_deps.flatten) unless namespaced_deps.empty?
+          value.concat(namespaced_dependencies)
         end
       end
       deps = value
