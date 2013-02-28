@@ -98,12 +98,11 @@ module Rake
       if args.empty?
         task_name = key
         arg_names = []
-        deps = value
       else
         task_name = args.shift
         arg_names = key
-        deps = value
       end
+        deps = value
       deps = [deps] unless deps.respond_to?(:to_ary)
       [task_name, arg_names, deps]
     end
