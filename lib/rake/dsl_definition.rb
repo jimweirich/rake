@@ -32,6 +32,15 @@ module Rake
       Rake::Task.define_task(*args, &block)
     end
 
+    # Remove a task.
+    #
+    # Example:
+    #   old = remove_task :foo
+    #
+    def remove_task(name)
+      Rake.application.instance_variable_get(:@tasks).delete(name.to_str)
+    end
+
     # Declare a file task.
     #
     # Example:

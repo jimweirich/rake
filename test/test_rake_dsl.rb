@@ -37,4 +37,12 @@ class TestRakeDsl < Rake::TestCase
     assert ! defined?(Commands), "should not define Commands"
   end
 
+  def test_remove_task
+    task "soon-gone"
+    assert Rake::Task.task_defined?("soon-gone")
+
+    remove_task "soon-gone"
+    refute Rake::Task.task_defined?("soon-gone")
+  end
+
 end
