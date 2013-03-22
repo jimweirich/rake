@@ -158,7 +158,7 @@ module Rake
     def standard_exception_handling
       begin
         yield
-      rescue SystemExit => ex
+      rescue SystemExit
         # Exit silently with current status
         raise
       rescue OptionParser::InvalidOption => ex
