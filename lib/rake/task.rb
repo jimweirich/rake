@@ -271,9 +271,10 @@ module Rake
       add_description(description)
     end
 
-    # Add a comment to the task.  If a comment already exists, separate
-    # the new comment with " / ".
+    # Add a comment to the task. Ignore duplicated comment. 
+    # If a comment already exists, separate the new comment with " / ".
     def add_comment(comment)
+      return if @full_comment.eql?(comment)
       if @full_comment
         @full_comment << " / "
       else
