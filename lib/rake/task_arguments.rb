@@ -62,6 +62,10 @@ module Rake
       lookup(sym.to_sym)
     end
 
+    def empty?
+      @hash.empty?
+    end  
+
     def to_hash
       @hash
     end
