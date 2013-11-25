@@ -113,6 +113,16 @@ module Rake
       end
     end
 
+    #(task "a").do_first
+
+    def do_first(deps=nil,&block)
+      deps = [deps] unless deps.nil? or deps.respond_to?(:to_ary)
+      deps = deps.map{|d| d.to_s} if deps
+      @prerequisites = deps | @prerequisites if deps
+      @actions.unshift block if block_given?
+      self
+    end
+
     # Argument description (nil if none).
     def arg_description # :nodoc:
       @arg_names ? "[#{arg_names.join(',')}]" : nil
