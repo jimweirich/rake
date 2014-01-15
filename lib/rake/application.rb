@@ -330,16 +330,12 @@ module Rake
     # Display the tasks and prerequisites
     def display_prerequisites
       if options.show_prereqs_verbose
-        if Rake.application.windows?
-          tasks.each do |t|
-            t.locations.map! do |loc|
+        tasks.each do |t|
+          t.locations.map! do |loc|
+            if loc[1,2] == ':/' # windows absolute path
               drive, path, lineno = loc.split(':')
               "#{drive}:#{path}:#{lineno}"
-            end
-          end
-        else
-          tasks.each do |t|
-            t.locations.map! do |loc|
+            else
               fn, lineno = loc.split(':')
               "#{fn}:#{lineno}"
             end
