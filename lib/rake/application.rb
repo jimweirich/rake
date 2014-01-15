@@ -329,9 +329,19 @@ module Rake
 
     # Display the tasks and prerequisites
     def display_prerequisites
-      tasks.each do |t|
-        puts "#{name} #{t.name}"
-        t.prerequisites.each { |pre| puts "    #{pre}" }
+      if options.show_prereqs_verbose
+        def recursion(tasks, indentlevel=0)
+          tasks.each do |t|
+            puts "#{'  '*indentlevel}#{t.class.name.split('::')[-1].downcase}  #{t.name}"
+            recursion(t.prerequisite_tasks, indentlevel+1)
+          end
+        end
+        recursion(tasks)
+      else
+        tasks.each do |t|
+          puts "#{name} #{t.name}"
+          t.prerequisites.each { |pre| puts "    #{pre}" }
+        end
       end
     end
 
@@ -444,7 +454,7 @@ module Rake
             lambda { |value| options.nosearch = true }
           ],
           ['--prereqs', '-P',
-            "Display the tasks and dependencies, then exit.",
+            "Display the tasks and dependencies, then exit. (have -v then show verbose)",
             lambda { |value| options.show_prereqs = true }
           ],
           ['--quiet', '-q',
@@ -528,7 +538,10 @@ module Rake
           ],
           ['--verbose', '-v',
             "Log message to standard output.",
-            lambda { |value| Rake.verbose(true) }
+            lambda { |value|
+              options.show_prereqs_verbose = true
+              Rake.verbose(true)
+            }
           ],
           ['--version', '-V',
             "Display the program version.",
