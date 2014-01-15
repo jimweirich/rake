@@ -332,7 +332,7 @@ module Rake
       if options.show_prereqs_verbose
         def recursion(tasks, indentlevel=0)
           tasks.each do |t|
-            puts "#{'  '*indentlevel}#{t.class.name.split('::')[-1].downcase}  #{t.name}"
+            puts "#{'  '*indentlevel}#{t.class.name.split('::')[-1].downcase}  #{t.name}  #{t.locations}"
             recursion(t.prerequisite_tasks, indentlevel+1)
           end
         end
@@ -540,6 +540,7 @@ module Rake
             "Log message to standard output.",
             lambda { |value|
               options.show_prereqs_verbose = true
+              Rake::TaskManager.record_task_metadata = true
               Rake.verbose(true)
             }
           ],
