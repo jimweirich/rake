@@ -330,6 +330,21 @@ module Rake
     # Display the tasks and prerequisites
     def display_prerequisites
       if options.show_prereqs_verbose
+        if Rake.application.windows?
+          tasks.each do |t|
+            t.locations.map! do |loc|
+              drive, path, lineno = loc.split(':')
+              "#{drive}:#{path}:#{lineno}"
+            end
+          end
+        else
+          tasks.each do |t|
+            t.locations.map! do |loc|
+              fn, lineno = loc.split(':')
+              "#{fn}:#{lineno}"
+            end
+          end
+        end
         def recursion(tasks, indentlevel=0)
           tasks.each do |t|
             puts "#{'  '*indentlevel}#{t.class.name.split('::')[-1].downcase}  #{t.name}  #{t.locations}"
