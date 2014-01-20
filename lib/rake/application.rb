@@ -184,7 +184,7 @@ module Rake
     # Display the error message that caused the exception.
     def display_error_message(ex)
       trace "#{name} aborted!"
-      trace ex.message
+      trace error_message(ex)
       if options.backtrace
         trace ex.backtrace.join("\n")
       else
@@ -193,6 +193,14 @@ module Rake
       trace "Tasks: #{ex.chain}" if has_chain?(ex)
       trace "(See full trace by running task with --trace)" unless
         options.backtrace
+    end
+
+    def error_message(ex)
+      if ex.is_a?(RuntimeError)
+        ex.message
+      else
+        ex.class.name + ': ' + ex.message
+      end
     end
 
     # Warn about deprecated usage.
