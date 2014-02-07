@@ -100,6 +100,20 @@ class TestRakeBacktrace < Rake::TestCase
     refute_match %r!Rakefile!i, lines[2]
   end
 
+  def test_exception_class_name
+    rakefile %q{
+      CustomError = Class.new(RuntimeError)
+
+      task :baz do
+        raise CustomError, "bazzz!"
+      end
+    }
+
+    lines = invoke("baz").split("\n")
+    assert_equal "rake aborted!", lines[0]
+    assert_equal "CustomError: bazzz!", lines[1]
+  end
+
   private
 
   # Assert that the pattern matches at least one line in +lines+.
