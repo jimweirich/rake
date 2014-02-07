@@ -102,14 +102,16 @@ class TestRakeBacktrace < Rake::TestCase
 
   def test_exception_class_name
     rakefile %q{
+      CustomError = Class.new(RuntimeError)
+
       task :baz do
-        raise StandardError, "bazzz!"
+        raise CustomError, "bazzz!"
       end
     }
 
     lines = invoke("baz").split("\n")
     assert_equal "rake aborted!", lines[0]
-    assert_equal "StandardError: bazzz!", lines[1]
+    assert_equal "CustomError: bazzz!", lines[1]
   end
 
   private

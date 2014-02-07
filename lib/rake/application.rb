@@ -196,7 +196,7 @@ module Rake
     end
 
     def error_message(ex)
-      if ex.is_a?(RuntimeError)
+      if ex.instance_of?(RuntimeError)
         ex.message
       else
         ex.class.name + ': ' + ex.message
