@@ -265,6 +265,40 @@ class TestRakeTask < Rake::TestCase
     assert_in_delta now, a.timestamp, 0.1, 'computer too slow?'
   end
 
+  def test_do_first_with_deps_adds_deps_to_front_of_prerequisites
+    a = task :a => ["b", "c"]
+    b = task :b
+    c = task :c
+    d = task :d
+
+    a.do_first [d]
+    assert_equal ["d","b","c"], Task["a"].prerequisites
+  end  
+
+  def test_do_first_with_deps_is_additive
+    a = task :a =>["b","c"]
+    b = task :b
+    c = task :c
+    d = task :d
+    e = task :e
+    a.do_first [d]
+    a.do_first [e]
+    assert_equal ["e","d","b","c"], Task["a"].prerequisites
+  end
+
+  def test_do_first_with_action_block_unshifts_block_to_actions
+    result = []
+    a = task :a do
+      result << 'first'
+    end
+
+    a.do_first do 
+      result << 'second'
+    end
+    Task["a"].invoke
+    assert_equal ['second','first'], result
+  end 
+
   def test_always_multitask
     mx = Mutex.new
     result = []
