@@ -1,7 +1,7 @@
 require 'rubygems'
 $:.unshift File.expand_path('../../lib', __FILE__)
 
-gem 'minitest', '~> 4'
+gem 'minitest', '~> 5'
 
 require 'minitest/autorun'
 require 'rake'
@@ -19,7 +19,7 @@ rescue NoMethodError, LoadError
   require 'test/support/rakefile_definitions'
 end
 
-class Rake::TestCase < MiniTest::Unit::TestCase
+class Rake::TestCase < Minitest::Test
   include FileCreation
 
   include Rake::DSL
