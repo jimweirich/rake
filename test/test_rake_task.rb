@@ -195,14 +195,14 @@ class TestRakeTask < Rake::TestCase
     assert_equal ["b", "c"], Task[:a].prerequisites
   end
 
-  def test_prerequiste_tasks_returns_tasks_not_strings
+  def test_prerequisite_tasks_returns_tasks_not_strings
     a = task :a => ["b", "c"]
     b = task :b
     c = task :c
     assert_equal [b, c], a.prerequisite_tasks
   end
 
-  def test_prerequiste_tasks_fails_if_prerequisites_are_undefined
+  def test_prerequisite_tasks_fails_if_prerequisites_are_undefined
     a = task :a => ["b", "c"]
     task :b
     assert_raises(RuntimeError) do
@@ -210,7 +210,8 @@ class TestRakeTask < Rake::TestCase
     end
   end
 
-  def test_prerequiste_tasks_honors_namespaces
+  def test_prerequisite_tasks_honors_namespaces
+    task :b
     a = b = nil
     namespace "X" do
       a = task :a => ["b", "c"]
@@ -219,6 +220,35 @@ class TestRakeTask < Rake::TestCase
     c = task :c
 
     assert_equal [b, c], a.prerequisite_tasks
+  end
+
+  def test_prerequisite_tasks_finds_tasks_with_same_name_outside_namespace
+    b1 = nil
+    namespace "a" do
+      b1 = task :b => "b"
+    end
+    b2 = task :b
+
+    assert_equal [b2], b1.prerequisite_tasks
+  end
+
+  def test_prerequisite_tasks_in_nested_namespaces
+    m = task :m
+    a_c_m = a_b_m = a_m = nil
+    namespace "a" do
+      a_m = task :m
+
+      namespace "b" do
+        a_b_m = task :m => "m"
+      end
+
+      namespace "c" do
+        a_c_m = task :m => "a:m"
+      end
+    end
+
+    assert_equal [m], a_b_m.prerequisite_tasks
+    assert_equal [a_m], a_c_m.prerequisite_tasks
   end
 
   def test_all_prerequisite_tasks_includes_all_prerequisites
